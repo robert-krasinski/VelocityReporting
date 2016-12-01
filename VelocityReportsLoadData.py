@@ -315,7 +315,6 @@ def GetJiraIssues():
             fixVersionName = getMajorVersion(fields['fixVersions'])
             # fixVersionName = fix_version['name'] if (fix_version) else None
 
-
             component = get_first(fields['components'])
             componentName = component['name'] if (component) else None
 
@@ -460,15 +459,13 @@ auth = BasicAuth(options.user, options.password)
 
 jsonFetcher = Fetcher(options.jira_url, auth)
 
-# GetReviewersFromGithub()
+GetReviewersFromGithub()
 
 GetComponentsFromJira()
 
 GetSprintIssuesFromJira()
 
 GetJiraIssues()
-
-
 
 end = time.time()
 print(end - start)
