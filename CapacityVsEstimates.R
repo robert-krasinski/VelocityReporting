@@ -156,8 +156,8 @@ sprints[sprints$id == 355 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.P
 #sprints[sprints$id == 280 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2016-11-21 10:00')
 #sprints[sprints$id == 328 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2016-11-22 10:00')
 #sprints[sprints$id == 328 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2016-12-5 10:00')
-sprints[sprints$id == 329 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2016-12-6 10:00')
-sprints[sprints$id == 329 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2016-12-19 10:00')
+#sprints[sprints$id == 329 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2016-12-6 10:00')
+#sprints[sprints$id == 329 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2016-12-19 10:00')
 sprints[sprints$id == 330 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2016-12-20 10:00')
 sprints[sprints$id == 330 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-1-2 10:00')
 sprints[sprints$id == 332 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2017-1-3 10:00')
@@ -250,6 +250,9 @@ issues[, "Quantity"] <- 1
 issues$originalEstimation <- issues$timeoriginalestimate / 60 / 60 / 8
 issues$originalEstimation[is.na(issues$originalEstimation) ] <- 0
 
+issues$remainingEstimate <- issues$remainingEstimate / 60 / 60 / 8
+issues$remainingEstimate[is.na(issues$remainingEstimate) ] <- 0
+
 #-----------------------------------------------------------
 #issues <- issues[issues$key == 'VEL-1397',]
 #View(issues)
@@ -289,13 +292,15 @@ sprintsWithIssues$originalEstimation <- ifelse(is.na(sprintsWithIssues$originalE
 #stop()
 
 #completedIssuesPerWeek <- aggregate( x=finishedIssues$Quantity,  by=list(finishedIssues$EndWeek, finishedIssues$project), 
-sprintsAggregated <- aggregate( x=sprintsWithIssues$originalEstimation, by=list(sprintsWithIssues$sprintId),  
+sprintsAggregated <- aggregate( x=cbind(sprintsWithIssues$originalEstimation, 
+                                        sprintsWithIssues$remainingEstimate), by=list(sprintsWithIssues$sprintId),  
                                 FUN = sum)
 
 
 
 colnames(sprintsAggregated )[1] <- "sprintId"
 colnames(sprintsAggregated )[2] <- "originalEstimationSum"
+colnames(sprintsAggregated )[3] <- "remainingEstimationSum"
 #colnames(sprintsAggregated )[2] <- "project"
 #sprintsAggregated <- sprintsAggregated[sprintsAggregated$sprintId == 324,]
 #View(sprintsAggregated)
@@ -459,11 +464,16 @@ sprintsAggregated$predictedEstimationSum <- ifelse(sprintsAggregated$state %in% 
 sprintsAggregated$estimationSum <- ifelse(sprintsAggregated$state %in% c('active', 'future'), 
                                                    sprintsAggregated$originalEstimationSum,
                                                    NA)
+
+
+sprintsAggregated$remainingEstimationSum <- ifelse(sprintsAggregated$state %in% c('active', 'future'), 
+                                          sprintsAggregated$remainingEstimation,
+                                          NA)
 #View(sprintsAggregated)
 #stop()
 
 sprintsAggregated$estimatedAvailCapacity <- ifelse(sprintsAggregated$state %in% c('active', 'future'), 
-                                                   sprintsAggregated$predictedEstimationSum - sprintsAggregated$estimationSum,
+                                                   sprintsAggregated$predictedEstimationSum - sprintsAggregated$remainingEstimationSum,
                                                    NA)
 
 for (currentProject in projects) {
@@ -538,12 +548,15 @@ backlog <- issues[issues$status %in% c('Backlog', 'In Development', 'In Code rev
                                        'In Testing'),]
 backlog <- backlog[backlog$fixVersion == '1.0 - ITH Live',]
 
-backlogAggr <- aggregate( x=backlog$originalEstimation, by=list(backlog$project),  
+backlogAggr <- aggregate( x=cbind(backlog$originalEstimation, backlog$remainingEstimate), by=list(backlog$project),  
                                 FUN = sum)
+
 colnames(backlogAggr )[1] <- "project"
 colnames(backlogAggr )[2] <- "originalEstimationSum"
+colnames(backlogAggr )[3] <- "remainingEstimateSum"
 
 #View(backlogAggr)
+#stop()
 
 day <- seq(Sys.Date(), length.out = 365, by = "day")
 day <- as.data.frame(day)
@@ -598,7 +611,7 @@ for (currentProject in projects)
 }
 
 burndown <- burndownTmp
-burndown$backlogLeft <- burndown$originalEstimationSum - burndown$predictedCapacityCumSum
+burndown$backlogLeft <- burndown$remainingEstimateSum - burndown$predictedCapacityCumSum
 burndown <- burndown[burndown$backlogLeft >= -1,]
 #View(burndown)
 
@@ -643,7 +656,7 @@ for (currentProject in projects) {
     #geom_point(aes(y=sprintsPerProject$estimationSum)) +
     #geom_line(aes(y=sprintsPerProject$estimationSum, colour ="planned estimations (Jira)")) + 
     xlab("Day")+
-    ylab("Original estimation sum (ideal days)") +
+    ylab("Remaining estimation sum (ideal days)") +
     ggtitle(paste("Burndown chart in project", currentProject, "for", Sys.Date(), sep = " ")) +
     labs(fill = "") +
     geom_vline(xintercept=as.numeric(as.Date(finishDate)), linetype="dotted") + 

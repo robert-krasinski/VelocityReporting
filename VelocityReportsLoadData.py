@@ -26,7 +26,7 @@ Issue = namedtuple('Issue',
                    ['id', 'project', 'key', 'summary', 'sprint', 'updated', 'priority', 'severity', 'component',
                     'fixVersion', 'type', 'created', 'reporter', 'status',
                     'devOwner', 'workTimeToComplete', 'timeToComplete', 'movedToComplete', 'timeoriginalestimate',
-                    'aggregatetimeoriginalestimate', 'transitions'], verbose=False)
+                    'aggregatetimeoriginalestimate', 'transitions', 'remainingEstimate'], verbose=False)
 
 Sprint = namedtuple('Sprint',
                     ['id', 'rapidViewId', 'state', 'name', 'dontKnowWhatExactly', 'startDate', 'endDate',
@@ -411,7 +411,8 @@ def GetJiraIssues():
                 movedToComplete=lastTransitionToCompleteState,
                 aggregatetimeoriginalestimate=fields['aggregatetimeoriginalestimate'],  # in seconds,
                 timeoriginalestimate=fields['aggregatetimeoriginalestimate'],
-                transitions=transitions
+                transitions=transitions,
+                remainingEstimate= fields['timeestimate']
 
             )
             issueList.append(issue)
@@ -429,7 +430,7 @@ def GetJiraIssues():
                     'fixVersion', 'type', 'created', 'reporter', 'status',
                     'devOwner', 'workTimeToComplete', 'timeToComplete', 'movedToComplete',
                     'aggregatetimeoriginalestimate',
-                    'timeoriginalestimate', 'transitions'))  # field header
+                    'timeoriginalestimate', 'transitions', 'remainingEstimate'))  # field header
         for row in issueList:
             # print row
             w.writerow(row)
@@ -459,7 +460,7 @@ auth = BasicAuth(options.user, options.password)
 
 jsonFetcher = Fetcher(options.jira_url, auth)
 
-GetReviewersFromGithub()
+#GetReviewersFromGithub()
 
 GetComponentsFromJira()
 
