@@ -21,6 +21,7 @@ Component = namedtuple('Component', ['component', 'project'], verbose=False)
 
 SprintIssue = namedtuple('SprintIssue', ['key', 'sprintId'], verbose=False)
 ComponentIssue = namedtuple('ComponentIssue', ['key', 'component'], verbose=False)
+EpicIssue = namedtuple('EpicIssue', ['epic', 'issue'], verbose=False)
 
 Issue = namedtuple('Issue',
                    ['id', 'project', 'key', 'summary', 'sprint', 'updated', 'priority', 'severity', 'component',
@@ -447,6 +448,104 @@ def GetJiraIssues():
             w.writerow(row)
 
 
+def GetVXTAndEpics():
+    #global startAt, issueComponents, component, sprint, issue, issuesFilename, f, w, row
+    startAt = 0
+    maxResults = 50
+    issueList = list()
+    epicIssueList = list()
+
+    while True:
+        url = options.jira_url + "/rest/api/2/search?jql=(project+%3D+%22VELOCITY+Product%22+and+type+%3D+epic)+or+(project+in+(vel%2C+vin%2C+vxt)+and+type+%3D+epic)&startAt=" + str(
+            startAt)
+
+
+        print url
+        response = jsonFetcher.getJSON(url)
+
+        for jsonIssue in response['issues']:
+
+            key = jsonIssue['key']
+            issueId = jsonIssue['id']
+            print key
+            fields = jsonIssue['fields']
+
+            fixVersionName = getMajorVersion(fields['fixVersions'])
+            # fixVersionName = fix_version['name'] if (fix_version) else None
+
+
+            for linkedIssue in fields[u'issuelinks']:
+                if 'inwardIssue' in linkedIssue:
+                    issueKey = linkedIssue[u'inwardIssue'][u'key']
+                else:
+                    issueKey = linkedIssue[u'outwardIssue'][u'key']
+
+                epicIssue = EpicIssue(
+                    epic= key,
+                    issue= issueKey
+                )
+                epicIssueList.append(epicIssue)
+
+            # for history in issue['histories']:
+            priority = fields['priority']
+            issue = Issue(
+                id= issueId,
+                project= fields['project']['key'],
+                key= key,
+                summary= fields['summary'],
+                sprint = None,
+                updated = fields['updated'],
+                component = None,
+                priority = priority['name'] if (priority) else None,
+                severity = None,
+                fixVersion = fixVersionName,
+                type = fields['issuetype']['name'],
+                created = fields['created'],
+                reporter = fields['reporter']['displayName'],
+                status = fields['status']['name'],
+                devOwner = None,
+                timeToComplete = None,
+                workTimeToComplete = None,
+                movedToComplete = None,
+                aggregatetimeoriginalestimate = fields['aggregatetimeoriginalestimate'],  # in seconds,
+                timeoriginalestimate = fields['aggregatetimeoriginalestimate'],
+                transitions = None,
+                remainingEstimate = fields['timeestimate']
+
+            )
+            issueList.append(issue)
+        # break;
+        # check if all is retrieved
+        startAt = startAt + maxResults;
+        if (startAt >= response['total']):
+            break;
+
+    issuesFilename = os.getcwd() + "/data/VelocityVXTAndEpic" + str(datetime.datetime.now()) + ".csv"
+    issuesFilename = issuesFilename.replace(":", ".")
+    print issuesFilename
+    with open(issuesFilename, 'w') as f:
+        w = csv.writer(f)
+        w.writerow(('id', 'project', 'key', 'summary', 'sprint', 'updated', 'priority', 'severity', 'component',
+                    'fixVersion', 'type', 'created', 'reporter', 'status',
+                    'devOwner', 'workTimeToComplete', 'timeToComplete', 'movedToComplete',
+                    'aggregatetimeoriginalestimate',
+                    'timeoriginalestimate', 'transitions', 'remainingEstimate'))  # field header
+        for row in issueList:
+            # print row
+            w.writerow(row)
+
+    epicIssueFilename = os.getcwd() + "/data/EpicIssue" + str(datetime.datetime.now()) + ".csv"
+    epicIssueFilename = epicIssueFilename.replace(":", ".")
+    print epicIssueFilename
+
+    with open(epicIssueFilename, 'w') as f:
+        w = csv.writer(f)
+        w.writerow(('epic', 'issue'))  # field header
+        for row in epicIssueList:
+            # print row
+            w.writerow(row)
+    pass
+
 if __name__ == '__main__':
     (options, args) = parseArgs()
 
@@ -459,6 +558,14 @@ start = time.time()
 auth = BasicAuth(options.user, options.password)
 
 jsonFetcher = Fetcher(options.jira_url, auth)
+
+
+
+
+
+
+
+GetVXTAndEpics()
 
 #GetReviewersFromGithub()
 
