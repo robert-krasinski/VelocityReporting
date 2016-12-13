@@ -52,7 +52,7 @@ vxtEpic$summary <- gsub("/", "", vxtEpic$summary)
 vxtEpic <- vxtEpic[!vxtEpic$fixVersion %in% c('0.2 ', 'POC ', 
                                               'Post ITH Go-Live 1.4 ', 'Post ITH Go-Live 1.3 ',
                                               'Post ITH Go-Live 1.1 ', 'Post ITH Go-Live 1.2 ',
-                                              'Post ITH Go-Live '),]
+                                              'Post ITH Go-Live ', '2.0 ', '3.0 ', 'Activiti '),]
 #View(vxtEpic)
 #stop()
 
@@ -93,8 +93,8 @@ epicIssueNoVXT <- epicIssueNoVXT[substr(epicIssueNoVXT$issue, 1, 3) != 'VXT',]
 
 backlog <- merge(backlog, epicIssueNoVXT, by.x ="key.child1", by.y = "epic", all.x = TRUE, suffixes = c('.child1.1', '.child2'))
 #backlog$key.child2 <- backlog$issue.x
-View(backlog)
-stop()
+#View(backlog)
+#stop()
 
 backlog$pathString <- paste("VXT", 
                             backlog$fixVersion.vxt, 
@@ -111,3 +111,11 @@ backlogTree <- as.Node(backlog)
 print(backlogTree, limit = 200)
 #plot(backlogTree)
 
+
+backlogIssues <- issues[issues$status == 'Backlog',]
+backlogIssues <- merge(backlogIssues, epicIssue, by.x = 'key', by.y = 'issue', 
+                       all.x = TRUE, suffixes = c('.backlog', '.parent1'))
+
+ 
+View(backlogIssues)
+#stop()
