@@ -25,7 +25,7 @@ EpicIssue = namedtuple('EpicIssue', ['epic', 'issue'], verbose=False)
 
 Issue = namedtuple('Issue',
                    ['id', 'project', 'key', 'summary', 'sprint', 'updated', 'priority', 'severity', 'component',
-                    'fixVersion', 'type', 'created', 'reporter', 'status',
+                    'fixVersion', 'minorVersion', 'type', 'created', 'reporter', 'status',
                     'devOwner', 'workTimeToComplete', 'timeToComplete', 'movedToComplete', 'timeoriginalestimate',
                     'aggregatetimeoriginalestimate', 'transitions', 'remainingEstimate'], verbose=False)
 
@@ -195,11 +195,20 @@ def isMajorVersion(version):
     else:
         return True
 
+def isMinorVersion(version):
+    return not isMajorVersion(version)
 
 def getMajorVersion(iterable, default=None):
     majorVersions = filter(isMajorVersion, iterable)
     if (len(majorVersions) > 1): raise ValueError("More than one major version found.")
     return majorVersions[0]['name'] if majorVersions else None
+
+
+def getMinorVersion(iterable, default=None):
+    minorVersions = filter(isMinorVersion, iterable)
+    minorVersions = sorted(minorVersions)
+    #if (len(minorVersions) > 1): raise ValueError("More than one minor version found.")
+    return minorVersions[0]['name'] if minorVersions else None
 
 
 # http://stackoverflow.com/questions/363944/python-idiom-to-return-first-item-or-none
@@ -290,6 +299,9 @@ def GetSprintIssuesFromJira():
     print sprintIssuesFile
 
 
+
+
+
 def GetJiraIssues():
     global startAt, issueComponents, component, sprint, issue, issuesFilename, f, w, row
     startAt = 0
@@ -314,6 +326,7 @@ def GetJiraIssues():
             fields = jsonIssue['fields']
 
             fixVersionName = getMajorVersion(fields['fixVersions'])
+            minorVersion = getMinorVersion(fields['fixVersions'])
             # fixVersionName = fix_version['name'] if (fix_version) else None
 
             component = get_first(fields['components'])
@@ -402,6 +415,7 @@ def GetJiraIssues():
                 priority=priority['name'] if (priority) else None,
                 severity=severity,
                 fixVersion=fixVersionName,
+                minorVersion= minorVersion,
                 type=fields['issuetype']['name'],
                 created=fields['created'],
                 reporter=fields['reporter']['displayName'],
@@ -428,7 +442,7 @@ def GetJiraIssues():
     with open(issuesFilename, 'w') as f:
         w = csv.writer(f)
         w.writerow(('id', 'project', 'key', 'summary', 'sprint', 'updated', 'priority', 'severity', 'component',
-                    'fixVersion', 'type', 'created', 'reporter', 'status',
+                    'fixVersion', 'minorVersion', 'type', 'created', 'reporter', 'status',
                     'devOwner', 'workTimeToComplete', 'timeToComplete', 'movedToComplete',
                     'aggregatetimeoriginalestimate',
                     'timeoriginalestimate', 'transitions', 'remainingEstimate'))  # field header
@@ -448,6 +462,14 @@ def GetJiraIssues():
             w.writerow(row)
 
 
+def getConcatenatedVersions(fixVersions):
+    versionString = ''
+    for version in fixVersions:
+        versionString += version['name'] + ' '
+    return versionString
+
+
+
 def GetVXTAndEpics():
     #global startAt, issueComponents, component, sprint, issue, issuesFilename, f, w, row
     startAt = 0
@@ -456,7 +478,7 @@ def GetVXTAndEpics():
     epicIssueList = list()
 
     while True:
-        url = options.jira_url + "/rest/api/2/search?jql=(project+%3D+%22VELOCITY+Product%22+and+type+%3D+epic)+or+(project+in+(vel%2C+vin%2C+vxt)+and+type+%3D+epic)&startAt=" + str(
+        url = options.jira_url + "/rest/api/2/search?jql=(project+%3D+%22VELOCITY+Product%22+and+type+%3D+epic)+or+(project+in+(vel%2C+vin%2C+vbs)+and+type+%3D+epic)&startAt=" + str(
             startAt)
 
 
@@ -470,7 +492,9 @@ def GetVXTAndEpics():
             print key
             fields = jsonIssue['fields']
 
-            fixVersionName = getMajorVersion(fields['fixVersions'])
+            #fixVersionName = getMajorVersion(fields['fixVersions'])
+            fixVersionName = getConcatenatedVersions(fields['fixVersions'])
+            minorVersion = getMinorVersion(fields['fixVersions'])
             # fixVersionName = fix_version['name'] if (fix_version) else None
 
 
@@ -499,6 +523,7 @@ def GetVXTAndEpics():
                 priority = priority['name'] if (priority) else None,
                 severity = None,
                 fixVersion = fixVersionName,
+                minorVersion= minorVersion,
                 type = fields['issuetype']['name'],
                 created = fields['created'],
                 reporter = fields['reporter']['displayName'],
@@ -526,7 +551,7 @@ def GetVXTAndEpics():
     with open(issuesFilename, 'w') as f:
         w = csv.writer(f)
         w.writerow(('id', 'project', 'key', 'summary', 'sprint', 'updated', 'priority', 'severity', 'component',
-                    'fixVersion', 'type', 'created', 'reporter', 'status',
+                    'fixVersion', 'minorVersion', 'type', 'created', 'reporter', 'status',
                     'devOwner', 'workTimeToComplete', 'timeToComplete', 'movedToComplete',
                     'aggregatetimeoriginalestimate',
                     'timeoriginalestimate', 'transitions', 'remainingEstimate'))  # field header
