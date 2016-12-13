@@ -478,7 +478,7 @@ def GetVXTAndEpics():
     epicIssueList = list()
 
     while True:
-        url = options.jira_url + "/rest/api/2/search?jql=(project+%3D+%22VELOCITY+Product%22+and+type+%3D+epic)+or+(project+in+(vel%2C+vin%2C+vbs)+and+type+%3D+epic)&startAt=" + str(
+        url = options.jira_url + "/rest/api/2/search?jql=(project+%3D+%22VELOCITY+Product%22)+or+(project+in+(vel%2C+vin%2C+vbs)+and+type+%3D+epic)&startAt=" + str(
             startAt)
 
 
