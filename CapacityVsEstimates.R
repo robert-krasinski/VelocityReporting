@@ -180,10 +180,10 @@ sprints[sprints$id == 344 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.P
 #sprints[sprints$id == 339 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2016-11-30 10:00')
 #sprints[sprints$id == 340 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2016-12-1 10:00')
 #sprints[sprints$id == 340 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2016-12-14 10:00')
-sprints[sprints$id == 350 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2016-12-15 10:00')
-sprints[sprints$id == 350 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2016-12-28 10:00')
-sprints[sprints$id == 351 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2016-12-29 10:00')
-sprints[sprints$id == 351 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2016-1-11 10:00')
+#sprints[sprints$id == 350 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2016-12-15 10:00')
+#sprints[sprints$id == 350 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-1-4 10:00')
+sprints[sprints$id == 351 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2017-1-5 10:00')
+sprints[sprints$id == 351 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-1-18 10:00')
 
 
 
@@ -621,7 +621,7 @@ burndown <- burndown[burndown$backlogLeft >= -1,]
 #continue until backlog is 0
 
 plannedFinishDate <- as.POSIXct.Date(as.Date('2017-02-21'))
-plannedFinishDateLabel <- paste("Planned finish date", 
+plannedFinishDateLabel <- paste("Planned 1.0 Go live date", 
                                 as.Date(plannedFinishDate), sep = " ")
 
 
