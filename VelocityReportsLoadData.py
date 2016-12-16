@@ -22,12 +22,14 @@ Component = namedtuple('Component', ['component', 'project'], verbose=False)
 SprintIssue = namedtuple('SprintIssue', ['key', 'sprintId'], verbose=False)
 ComponentIssue = namedtuple('ComponentIssue', ['key', 'component'], verbose=False)
 EpicIssue = namedtuple('EpicIssue', ['epic', 'issue'], verbose=False)
+IssueLink = namedtuple('IssueLink', ['key', 'linkedKey'], verbose=False)
 
 Issue = namedtuple('Issue',
                    ['id', 'project', 'key', 'summary', 'sprint', 'updated', 'priority', 'severity', 'component',
                     'fixVersion', 'minorVersion', 'type', 'created', 'reporter', 'status',
                     'devOwner', 'workTimeToComplete', 'timeToComplete', 'movedToComplete', 'timeoriginalestimate',
-                    'aggregatetimeoriginalestimate', 'transitions', 'remainingEstimate'], verbose=False)
+                    'aggregatetimeoriginalestimate', 'transitions', 'codeReviewToDev', 'testsToDev',
+                    'remainingEstimate'], verbose=False)
 
 Sprint = namedtuple('Sprint',
                     ['id', 'rapidViewId', 'state', 'name', 'dontKnowWhatExactly', 'startDate', 'endDate',
@@ -310,6 +312,8 @@ def GetJiraIssues():
     issueComponents = list()
     preDevelopmentStates = ['Idea', 'Refinement', 'Tech Refinement & Est.', 'Backlog']
     finalStates = ['Completed', 'Rejected', 'Reviewed', 'Resolved', 'Closed', 'Awaiting Review', 'Frozen', 'Archived']
+    linkedVxt = list()
+
     while True:
         url = options.jira_url + "/rest/api/2/search?jql=project+in+%28VEL,VBS,VIN%29+and+type+not+in+%28Epic%29+ORDER+BY+created+ASC&expand=changelog&startAt=" + str(
             startAt)
@@ -338,6 +342,20 @@ def GetJiraIssues():
                     component=comp['name']
                 )
                 issueComponents.append(componentIssue)
+
+            for linkedIssue in fields[u'issuelinks']:
+                if 'inwardIssue' in linkedIssue:
+                    issueKey = linkedIssue[u'inwardIssue'][u'key']
+                else:
+                    issueKey = linkedIssue[u'outwardIssue'][u'key']
+
+                #if unicode.startswith(issueKey, 0, 3) != 'VXT': continue
+
+                link = IssueLink(
+                    key = key,
+                    linkedKey = issueKey
+                )
+                linkedVxt.append(link)
 
             if (fields['customfield_10007']):
                 sprintEncoded = fields['customfield_10007'][0]
@@ -378,6 +396,9 @@ def GetJiraIssues():
 
                     fromStatus = item['fromString']
                     toStatus = item['toString']
+
+
+
 
                     # if from is in final state not add time
                     # if from is in preDev state not add time
@@ -427,6 +448,8 @@ def GetJiraIssues():
                 aggregatetimeoriginalestimate=fields['aggregatetimeoriginalestimate'],  # in seconds,
                 timeoriginalestimate=fields['aggregatetimeoriginalestimate'],
                 transitions=transitions,
+                #codeReviewToDev = codeReviewToDev,
+                #testsToDev = testsToDev,
                 remainingEstimate= fields['timeestimate']
 
             )
@@ -458,6 +481,17 @@ def GetJiraIssues():
         w = csv.writer(f)
         w.writerow(('key', 'component'))  # field header
         for row in issueComponents:
+            # print row
+            w.writerow(row)
+
+    linkedVxtFilename = os.getcwd() + "/data/linkedVxt" + str(datetime.datetime.now()) + ".csv"
+    linkedVxtFilename = linkedVxtFilename.replace(":", ".")
+    print linkedVxtFilename
+
+    with open(linkedVxtFilename, 'w') as f:
+        w = csv.writer(f)
+        w.writerow(('key', 'linkedKey'))  # field header
+        for row in linkedVxt:
             # print row
             w.writerow(row)
 
@@ -589,16 +623,16 @@ jsonFetcher = Fetcher(options.jira_url, auth)
 
 
 
-
+GetJiraIssues()
 GetVXTAndEpics()
-
-#GetReviewersFromGithub()
 
 GetComponentsFromJira()
 
 GetSprintIssuesFromJira()
 
-GetJiraIssues()
+
+#GetReviewersFromGithub()
+
 
 end = time.time()
 print(end - start)
