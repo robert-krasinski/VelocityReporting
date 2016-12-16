@@ -525,6 +525,7 @@ createdVsClosedByWeek[, "left"] <- as.integer(createdVsClosedByWeek$opened) - as
 #stop()
 
 openBugs <- openIssues[openIssues$type == 'Bug',]
+openBugs <- openBugs[openBugs$status == 'Backlog',]
 openBugsAggr <- aggregate( x=openBugs$Quantity,  by=list(openBugs$project, openBugs$priority), 
                                   FUN = sum)
 
