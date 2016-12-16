@@ -33,3 +33,7 @@ JiraGithubMapping.csv
 .Rproj.user
 
 VelocityReporting.Rproj
+
+*.txt
+
+*.zip
