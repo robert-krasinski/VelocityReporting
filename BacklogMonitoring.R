@@ -14,6 +14,7 @@ library(treemap)
 library(data.tree)
 
 rm(list=ls(all=TRUE)) 
+projects <- c('VEL', 'VBS', 'VIN')
 
 getLatestFile <- function(filePattern)
 {
@@ -24,6 +25,12 @@ getLatestFile <- function(filePattern)
   return(latestFile)
 }
 
+latestFile <- getLatestFile("linkedVxt.*.csv")
+linkedVXT <- read.csv(
+  file= latestFile,
+  head=TRUE,sep=",", dec=".", stringsAsFactors=FALSE)
+
+linkedVXT <- linkedVXT[startsWith(linkedVXT$linkedKey, 'VXT'),]
 
 latestFile <- getLatestFile("VelocityIssues2016.*.csv")
 issues <- read.csv(
@@ -52,7 +59,8 @@ vxtEpic$summary <- gsub("/", "", vxtEpic$summary)
 vxtEpic <- vxtEpic[!vxtEpic$fixVersion %in% c('0.2 ', 'POC ', 
                                               'Post ITH Go-Live 1.4 ', 'Post ITH Go-Live 1.3 ',
                                               'Post ITH Go-Live 1.1 ', 'Post ITH Go-Live 1.2 ',
-                                              'Post ITH Go-Live ', '2.0 ', '3.0 ', 'Activiti '),]
+                                              'Post ITH Go-Live ', '2.0 ', '3.0 ', 'Activiti ',
+                                              ''),]
 #View(vxtEpic)
 #stop()
 
@@ -73,7 +81,7 @@ vxtIssues <- vxtIssues[order(vxtIssues$fixVersion),]
 epics <- vxtEpic[vxtEpic$project != 'VXT',]
 
 epicsAndIssues <- rbind(epics, issues)
-epics <- epics[epics$key == 'VBS-1150',]
+#epics <- epics[epics$key == 'VBS-1150',]
 
 #epicsAndIssues <- epicsAndIssues[!epics$status %in% c('Done', 'Rejected'),]
 #View(epics)
@@ -113,9 +121,39 @@ print(backlogTree, limit = 200)
 
 
 backlogIssues <- issues[issues$status == 'Backlog',]
-backlogIssues <- merge(backlogIssues, epicIssue, by.x = 'key', by.y = 'issue', 
-                       all.x = TRUE, suffixes = c('.backlog', '.parent1'))
+backlogIssues <- merge(backlogIssues, linkedVXT, by.x = 'key', by.y = 'key', 
+                       all.x = TRUE, suffixes = c('.backlog', '.vxt'))
 
- 
-View(backlogIssues)
+backlogIssues$islinkedVXT <- ifelse(!is.na(backlogIssues$linkedKey), 'linked VXT', 'not linked VXT')
+backlogIssues$count <- 1
+
+backlogIssuesAggr <- aggregate( x=cbind(backlogIssues$count), 
+                                 by=list(backlogIssues$project, 
+                                         backlogIssues$islinkedVXT),  
+                                 FUN = sum)
+colnames(backlogIssuesAggr )[1] <- "project"
+colnames(backlogIssuesAggr )[2] <- "isLinked"
+colnames(backlogIssuesAggr )[3] <- "count"
+
+backlogIssuesAggr$isLinked <- paste(backlogIssuesAggr$isLinked, ":" ,
+                                    backlogIssuesAggr$count)
+
+#View(backlogIssuesAggr)
+#stop()
+
+for (currentProject in projects) {
+  backlogIssuesAggrPerProject <- backlogIssuesAggr[backlogIssuesAggr$project == currentProject,]
+  plot <- pie(backlogIssuesAggrPerProject$count, 
+              labels = backlogIssuesAggrPerProject$isLinked, 
+              col = c("green", "red"),
+              main=paste("Issues in backlog for project: ", currentProject))
+  print(plot)
+}
+
+# colnames(backlogIssuesAggr )[1] <- "project"
+# colnames(backlogIssuesAggr )[2] <- "linkedVXT"
+# colnames(backlogIssuesAggr )[3] <- "issuesCount"
+# backlogIssuesAggr$notLinked <- backlogIssuesAggr$issuesCount - backlogIssuesAggr$linkedVXT
+# 
+# 
 #stop()
