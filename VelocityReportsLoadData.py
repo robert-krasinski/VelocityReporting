@@ -613,6 +613,15 @@ def GetVXTAndEpics():
             w.writerow(row)
     pass
 
+
+def createOutputFolder():
+    dataOutputPath = os.getcwd() + '/data'
+    if not os.path.isdir(dataOutputPath) :
+        os.makedirs(dataOutputPath)
+
+
+    pass
+
 if __name__ == '__main__':
     (options, args) = parseArgs()
 
@@ -630,6 +639,10 @@ jsonFetcher = Fetcher(options.jira_url, auth)
 
 
 
+createOutputFolder()
+
+
+#GetReviewersFromGithub()
 
 GetJiraIssues()
 GetVXTAndEpics()
@@ -639,7 +652,7 @@ GetComponentsFromJira()
 GetSprintIssuesFromJira()
 
 
-#GetReviewersFromGithub()
+
 
 
 end = time.time()
