@@ -121,6 +121,7 @@ openIssues <- openIssues[!finishedIssues$type %in% c('Sub-task'),]
 #stop()
 
 
+
 #-----------------------------------------------------------------------------------------------------
 #download all components
 componentsLatestFile <- getLatestFile('components_.*json')
@@ -766,4 +767,90 @@ gitHubCommentsAggrWeek <- gitHubCommentsAggrWeek[!(gitHubCommentsAggrWeek$author
  
  #View(finishedIssuesInProjectUserComponent[['VEL']])
  
+ finishedIssuesMovedBack <- finishedIssues[(finishedIssues$codeReviewToDev > 0) | (finishedIssues$testsToDev > 0),]
+ finishedIssuesMovedBackVBS <- finishedIssuesMovedBack[finishedIssuesMovedBack$project == 'VBS',]
+ finishedIssuesMovedBackVBS <- finishedIssuesMovedBackVBS[order(finishedIssuesMovedBackVBS$EndWeek), ]
+ finishedIssuesMovedBackVBS$returnsSum <- finishedIssuesMovedBackVBS$codeReviewToDev + finishedIssuesMovedBackVBS$testsToDev
+ finishedIssuesMovedBackVBS <- finishedIssuesMovedBackVBS[finishedIssuesMovedBackVBS$returnsSum >= 4,]
  
+ finishedIssuesMovedBackVBS <- subset(finishedIssuesMovedBackVBS, select = c(key, summary, EndWeek, codeReviewToDev,
+                                                                             testsToDev, returnsSum, devOwner))
+ #View(finishedIssuesMovedBackVBS)
+ #stop()
+ 
+ finishedIssuesMovedBackAggrWeek <- aggregate( x=cbind(finishedIssuesMovedBack$codeReviewToDev,
+                                                       finishedIssuesMovedBack$testsToDev),  
+                                               by=list(finishedIssuesMovedBack$EndWeek,
+                                                       finishedIssuesMovedBack$project), FUN = sum)
+
+ colnames(finishedIssuesMovedBackAggrWeek )[1] <- "finishWeek"
+ colnames(finishedIssuesMovedBackAggrWeek )[2] <- "project"
+ colnames(finishedIssuesMovedBackAggrWeek )[3] <- "codeReviewToDev"
+ colnames(finishedIssuesMovedBackAggrWeek )[4] <- "testsToDev"
+ 
+ allWeeks <- data.frame(week = seq(from = min(finishedIssuesMovedBackAggrWeek$finishWeek), 
+                                   to = max(finishedIssuesMovedBackAggrWeek$finishWeek), by="+1 week"))
+ colnames(allWeeks)[1] <- "finishWeek"
+ allWeeks[, "variable"] <- 'codeReviewToDev'
+ allWeeks[, "value"] <- 0
+ 
+ 
+ finishedIssuesMovedBackAggrWeek <- melt(finishedIssuesMovedBackAggrWeek, id=c("finishWeek","project")) 
+ #View(finishedIssuesMovedBackAggrWeek)
+ #stop()
+ 
+ completedIssuesAggrSumWeek <- aggregate(by=list(completedIssuesAggrSumWeek$week,
+                                                 completedIssuesAggrSumWeek$project), 
+                                         x = completedIssuesAggrSumWeek$count, FUN = sum)
+ colnames(completedIssuesAggrSumWeek)[1] <- 'finishWeek'
+ colnames(completedIssuesAggrSumWeek)[2] <- 'project'
+ colnames(completedIssuesAggrSumWeek)[3] <- 'count'
+ #View(completedIssuesAggrSumWeek)
+ #stop()
+ 
+ 
+ for(currentProject in projects)
+ {
+   allWeeks$project <- currentProject
+   
+   finishedIssuesMovedBackAggrWeekPerProject <- finishedIssuesMovedBackAggrWeek[
+     finishedIssuesMovedBackAggrWeek$project == currentProject,]
+   
+   missingWeeks <- allWeeks[!(allWeeks$finishWeek %in% (finishedIssuesMovedBackAggrWeekPerProject$finishWeek)),]
+   finishedIssuesMovedBackAggrWeekPerProject <- rbind(finishedIssuesMovedBackAggrWeekPerProject, missingWeeks)
+   finishedIssuesMovedBackAggrWeekPerProject <- merge(finishedIssuesMovedBackAggrWeekPerProject, completedIssuesAggrSumWeek,
+                                                       by.y = c("finishWeek", "project"), by.x = c("finishWeek", "project"),
+                                                      all.x = TRUE
+                                                      )
+   finishedIssuesMovedBackAggrWeekPerProject$transitionsNormalized <- 
+      finishedIssuesMovedBackAggrWeekPerProject$value / finishedIssuesMovedBackAggrWeekPerProject$count
+
+   #View(finishedIssuesMovedBackAggrWeekPerProject)
+   #stop()
+
+   plot <- ggplot(data = finishedIssuesMovedBackAggrWeekPerProject, 
+                  aes(x = finishedIssuesMovedBackAggrWeekPerProject$finishWeek,
+                      y = finishedIssuesMovedBackAggrWeekPerProject$transitionsNormalized,
+                      fill = finishedIssuesMovedBackAggrWeekPerProject$variable)) +
+                  geom_bar(stat="identity") +
+     ggtitle(paste("Returns from tests & code review weekly in project:", currentProject)) + 
+     scale_fill_manual( values = c("yellow", "orange") ) +
+     ylab("Number of transitions / number of issues finished") +
+     xlab("week") +
+     labs(fill  = "Type")
+   
+   print(plot)
+   
+   plot <- ggplot(data = finishedIssuesMovedBackAggrWeekPerProject, 
+                  aes(x = finishedIssuesMovedBackAggrWeekPerProject$finishWeek,
+                      y = finishedIssuesMovedBackAggrWeekPerProject$value,
+                      fill = finishedIssuesMovedBackAggrWeekPerProject$variable)) +
+     geom_bar(stat="identity") +
+     ggtitle(paste("Returns from tests & code review weekly in project:", currentProject)) + 
+     scale_fill_manual( values = c("yellow", "orange") ) +
+     ylab("Number of transitions") +
+     xlab("week") +
+     labs(fill  = "Type")
+   
+   print(plot)
+ }

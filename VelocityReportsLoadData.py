@@ -381,6 +381,8 @@ def GetJiraIssues():
             workTimeToComplete = 0
             transitions = 0
             lastTransitionToCompleteState = None
+            testsToDev = 0
+            codeReviewToDev = 0
 
             for history in jsonIssue['changelog']['histories']:
                 transferDate = history['created']
@@ -396,6 +398,10 @@ def GetJiraIssues():
 
                     fromStatus = item['fromString']
                     toStatus = item['toString']
+
+                    if fromStatus == 'In Testing' and toStatus == 'In Development': testsToDev += 1
+                    if fromStatus == 'In Code review' and toStatus == 'In Development':  codeReviewToDev += 1
+
 
 
 
@@ -448,8 +454,8 @@ def GetJiraIssues():
                 aggregatetimeoriginalestimate=fields['aggregatetimeoriginalestimate'],  # in seconds,
                 timeoriginalestimate=fields['aggregatetimeoriginalestimate'],
                 transitions=transitions,
-                #codeReviewToDev = codeReviewToDev,
-                #testsToDev = testsToDev,
+                codeReviewToDev = codeReviewToDev,
+                testsToDev = testsToDev,
                 remainingEstimate= fields['timeestimate']
 
             )
@@ -468,7 +474,7 @@ def GetJiraIssues():
                     'fixVersion', 'minorVersion', 'type', 'created', 'reporter', 'status',
                     'devOwner', 'workTimeToComplete', 'timeToComplete', 'movedToComplete',
                     'aggregatetimeoriginalestimate',
-                    'timeoriginalestimate', 'transitions', 'remainingEstimate'))  # field header
+                    'timeoriginalestimate', 'transitions', 'codeReviewToDev', 'testsToDev', 'remainingEstimate'))  # field header
         for row in issueList:
             # print row
             w.writerow(row)
@@ -569,6 +575,8 @@ def GetVXTAndEpics():
                 aggregatetimeoriginalestimate = fields['aggregatetimeoriginalestimate'],  # in seconds,
                 timeoriginalestimate = fields['aggregatetimeoriginalestimate'],
                 transitions = None,
+                codeReviewToDev=None,
+                testsToDev=None,
                 remainingEstimate = fields['timeestimate']
 
             )
@@ -588,7 +596,7 @@ def GetVXTAndEpics():
                     'fixVersion', 'minorVersion', 'type', 'created', 'reporter', 'status',
                     'devOwner', 'workTimeToComplete', 'timeToComplete', 'movedToComplete',
                     'aggregatetimeoriginalestimate',
-                    'timeoriginalestimate', 'transitions', 'remainingEstimate'))  # field header
+                    'timeoriginalestimate', 'transitions', 'codeReviewToDev', 'testsToDev', 'remainingEstimate'))  # field header
         for row in issueList:
             # print row
             w.writerow(row)
