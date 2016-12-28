@@ -60,17 +60,17 @@ issues <- read.csv(
     file= latestFile,
     head=TRUE,sep=",", dec=".", stringsAsFactors=FALSE)
 
-githubLatestFile <- getLatestFile('GitHubIssues2016.*.csv')
+#githubLatestFile <- getLatestFile('GitHubIssues2016.*.csv')
 
-gitHubComments <- read.csv(githubLatestFile,
+#gitHubComments <- read.csv(githubLatestFile,
   #file = "/Users/robertk/Office365/OneDrive - Kainos Software Ltd/Documents/VelocityReporting/data/GitHubIssues2016-08-02 09.25.14.408001.csv",
-  head=TRUE,sep=",", dec=".", stringsAsFactors=FALSE)
+#  head=TRUE,sep=",", dec=".", stringsAsFactors=FALSE)
 
 
-gitHubComments$created <- as.POSIXct(gitHubComments$created, format="%Y-%m-%d %H:%M:%S")
-gitHubComments[, "createdMonth"] <- as.Date(cut(as.Date(gitHubComments$created), breaks = "month"))
-gitHubComments[, "createdWeek"] <- as.Date(cut(as.Date(gitHubComments$created), breaks = "week"))
-gitHubComments[, "Quantity"] <- 1
+#gitHubComments$created <- as.POSIXct(gitHubComments$created, format="%Y-%m-%d %H:%M:%S")
+#gitHubComments[, "createdMonth"] <- as.Date(cut(as.Date(gitHubComments$created), breaks = "month"))
+#gitHubComments[, "createdWeek"] <- as.Date(cut(as.Date(gitHubComments$created), breaks = "week"))
+#gitHubComments[, "Quantity"] <- 1
 
 #View(gitHubComments)
 #stop()
@@ -645,33 +645,33 @@ colnames(estimatedFinishedIssuesAggrPerc )[3] <- "meanEstimationDifferencePerc"
 
 #----------------------------------------------------------------------------------
 #comments in velocity core per person
-gitHubCommentsAggrWeek <- aggregate( x=gitHubComments$Quantity,  by=list(gitHubComments$createdWeek, gitHubComments$author), 
-                                          FUN = sum)
-colnames(gitHubCommentsAggrWeek )[1] <- "week"
-colnames(gitHubCommentsAggrWeek )[2] <- "author"
-colnames(gitHubCommentsAggrWeek )[3] <- "count"
-
-notInCoreTeam <- c("AgnesAnn", "KarolBialyKainos", "arompa", 'artursenk',
-                   'KrzysztofKowalskiKainos', 'grzegorz-borczuch', 'michalschott',
-                   'krzysztofsk', 'marines', 'CommanderK5', 'grzegorz-gn',
-                   'szymonrkainos', 'piotrs-kainos', 'robchare')
-
-gitHubCommentsAggrWeek <- gitHubCommentsAggrWeek[!(gitHubCommentsAggrWeek$author %in% notInCoreTeam),]
-
-#View(gitHubCommentsAggrWeek)
-
-  
- ggplot(data = gitHubCommentsAggrWeek, aes(x = gitHubCommentsAggrWeek$week,
-                                                                y = gitHubCommentsAggrWeek$count,
-                                                                fill = gitHubCommentsAggrWeek$author)) +
-    geom_bar(stat="identity") +
-    ggtitle("Core GitHub comments weekly") + scale_fill_manual( values = c25 ) +
-    ylab("Comments") +
-    xlab("week") +
-    labs(fill = "author") +
-    geom_vline(xintercept=as.numeric(as.Date('2016-05-01', format="%Y-%m-%d")), linetype="dotted") +
-    geom_vline(xintercept=as.numeric(as.Date('2016-07-01', format="%Y-%m-%d")), linetype="dotted")
-   
+# gitHubCommentsAggrWeek <- aggregate( x=gitHubComments$Quantity,  by=list(gitHubComments$createdWeek, gitHubComments$author), 
+#                                           FUN = sum)
+# colnames(gitHubCommentsAggrWeek )[1] <- "week"
+# colnames(gitHubCommentsAggrWeek )[2] <- "author"
+# colnames(gitHubCommentsAggrWeek )[3] <- "count"
+# 
+# notInCoreTeam <- c("AgnesAnn", "KarolBialyKainos", "arompa", 'artursenk',
+#                    'KrzysztofKowalskiKainos', 'grzegorz-borczuch', 'michalschott',
+#                    'krzysztofsk', 'marines', 'CommanderK5', 'grzegorz-gn',
+#                    'szymonrkainos', 'piotrs-kainos', 'robchare')
+# 
+# gitHubCommentsAggrWeek <- gitHubCommentsAggrWeek[!(gitHubCommentsAggrWeek$author %in% notInCoreTeam),]
+# 
+# #View(gitHubCommentsAggrWeek)
+# 
+#   
+#  ggplot(data = gitHubCommentsAggrWeek, aes(x = gitHubCommentsAggrWeek$week,
+#                                                                 y = gitHubCommentsAggrWeek$count,
+#                                                                 fill = gitHubCommentsAggrWeek$author)) +
+#     geom_bar(stat="identity") +
+#     ggtitle("Core GitHub comments weekly") + scale_fill_manual( values = c25 ) +
+#     ylab("Comments") +
+#     xlab("week") +
+#     labs(fill = "author") +
+#     geom_vline(xintercept=as.numeric(as.Date('2016-05-01', format="%Y-%m-%d")), linetype="dotted") +
+#     geom_vline(xintercept=as.numeric(as.Date('2016-07-01', format="%Y-%m-%d")), linetype="dotted")
+#    
    #geom_text(data=releasedVersions, mapping=aes(x=releasedVersions$releasedDateConverted, y=0, label=releasedVersions$name), size=4, angle=90, vjust=-0.4, hjust=0)
 
 
