@@ -10,15 +10,15 @@ library(zoo)
 #stop()
 #require("XLConnect")
 
-rm(list=ls(all=TRUE)) 
+
 
 #uncomment for pdf
 #pdf(file='/Users/robertk/Office365/OneDrive - Kainos Software Ltd/Documents/VelocityReporting/data/CapacityVsEstimates.pdf'
 #      , width=15, height=7)
 
 #-----------------------------------------------------------
-#load data from excel
-capacityExcel <- "/Users/robertk/Box\ Sync/Capacity\ Plan/Velocity\ Platform\ Capacity\ Plan\ V0.2.xlsx"
+
+
 capacityDate <- read.xlsx(
   capacityExcel, 
   sheetName = "ExportSummary", header = FALSE, rowIndex = 1,
@@ -83,12 +83,12 @@ sprints <- NULL
 for (board in boards) {
   
   sprintJsonFilePattern <- paste("sprints", board, "_.*.json", sep = "")
-  sprintFiles <- list.files(path = "/Users/robertk/Office365/OneDrive - Kainos Software Ltd/Documents/VelocityReporting/data/", 
+  sprintFiles <- list.files(path = "./data/", 
                             pattern = sprintJsonFilePattern)
   
   sprintFiles <- sort(sprintFiles, decreasing = TRUE)
   latestSprintFile <- paste(
-    "/Users/robertk/Office365/OneDrive - Kainos Software Ltd/Documents/VelocityReporting/data/", sprintFiles[1], 
+    "./data/", sprintFiles[1], 
     sep = "")
   
   json_data <- fromJSON(txt = latestSprintFile)
@@ -158,12 +158,12 @@ sprints[sprints$id == 355 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.P
 #sprints[sprints$id == 328 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2016-12-5 10:00')
 #sprints[sprints$id == 329 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2016-12-6 10:00')
 #sprints[sprints$id == 329 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2016-12-19 10:00')
-sprints[sprints$id == 330 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2016-12-20 10:00')
-sprints[sprints$id == 330 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-1-2 10:00')
-sprints[sprints$id == 332 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2017-1-3 10:00')
-sprints[sprints$id == 332 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-1-16 10:00')
-sprints[sprints$id == 344 & is.na(sprints$sprintEndDate),]$sprintStartDate <- as.POSIXct('2017-1-17 10:00')
-sprints[sprints$id == 344 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-1-30 10:00')
+sprints[sprints$id == 330 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2016-1-3 10:00')
+sprints[sprints$id == 330 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-1-16 10:00')
+sprints[sprints$id == 332 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2017-1-17 10:00')
+sprints[sprints$id == 332 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-1-30 10:00')
+sprints[sprints$id == 344 & is.na(sprints$sprintEndDate),]$sprintStartDate <- as.POSIXct('2017-1-31 10:00')
+sprints[sprints$id == 344 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-2-13 10:00')
 
 
 #VIN
@@ -182,9 +182,10 @@ sprints[sprints$id == 344 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.P
 #sprints[sprints$id == 340 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2016-12-14 10:00')
 #sprints[sprints$id == 350 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2016-12-15 10:00')
 #sprints[sprints$id == 350 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-1-4 10:00')
-sprints[sprints$id == 351 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2017-1-5 10:00')
-sprints[sprints$id == 351 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-1-18 10:00')
-
+sprints[sprints$id == 351 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2017-1-12 10:00')
+sprints[sprints$id == 351 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-1-25 10:00')
+sprints[sprints$id == 356 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2017-1-26 10:00')
+sprints[sprints$id == 356 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-2-8 10:00')
 
 
 #View(sprints)
@@ -207,18 +208,18 @@ sprints[sprints$id == 351 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.P
 #View(sprints)
 #stop()
 
-files <- list.files(path = "/Users/robertk/Office365/OneDrive - Kainos Software Ltd/Documents/VelocityReporting/data/", pattern = "VelocityIssues2016.*.csv")
+files <- list.files(path = "./data/", pattern = "VelocityIssues2016.*.csv")
 files <- sort(files, decreasing = TRUE)
-latestFile <- paste("/Users/robertk/Office365/OneDrive - Kainos Software Ltd/Documents/VelocityReporting/data/", files[1], sep = "")
+latestFile <- paste("./data/", files[1], sep = "")
 issues <- read.csv(
   file= latestFile,
   head=TRUE,sep=",", dec=".", stringsAsFactors=FALSE)
 
 
-sprintIssueFiles <- list.files(path = "/Users/robertk/Office365/OneDrive - Kainos Software Ltd/Documents/VelocityReporting/data/", pattern = "SprintIssue.*.csv")
+sprintIssueFiles <- list.files(path = "./data/", pattern = "SprintIssue.*.csv")
 sprintIssueFiles <- sort(sprintIssueFiles, decreasing = TRUE)
 
-latestSprintIssueFile <- paste("/Users/robertk/Office365/OneDrive - Kainos Software Ltd/Documents/VelocityReporting/data/", sprintIssueFiles[1], sep = "")
+latestSprintIssueFile <- paste("./data/", sprintIssueFiles[1], sep = "")
 print(latestSprintIssueFile)
 sprintIssues <- read.csv(
   file= latestSprintIssueFile,
@@ -672,12 +673,12 @@ for (currentProject in projects) {
 
 
 write.xlsx(sprintsAggregated, sheetName = "data", append = FALSE,
-           "/Users/robertk/Office365/OneDrive - Kainos Software Ltd/Documents/VelocityReporting/data/CapacityVsEstimates.xlsx") 
+           "./data/CapacityVsEstimates.xlsx") 
 write.xlsx(availCapacityAggr, sheetName = "availableCapacity", append = TRUE,
-           "/Users/robertk/Office365/OneDrive - Kainos Software Ltd/Documents/VelocityReporting/data/CapacityVsEstimates.xlsx") 
+           "./data/CapacityVsEstimates.xlsx") 
 
 write.xlsx(burndown, sheetName = "burndown", append = TRUE,
-           "/Users/robertk/Office365/OneDrive - Kainos Software Ltd/Documents/VelocityReporting/data/CapacityVsEstimates.xlsx") 
+           "./data/CapacityVsEstimates.xlsx") 
 
 
 
