@@ -643,13 +643,15 @@ createOutputFolder()
 
 
 #GetReviewersFromGithub()
-
-GetJiraIssues()
-GetVXTAndEpics()
-
-GetComponentsFromJira()
-
 GetSprintIssuesFromJira()
+GetComponentsFromJira()
+GetVXTAndEpics()
+GetJiraIssues()
+
+
+
+
+
 
 
 
