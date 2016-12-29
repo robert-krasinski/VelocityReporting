@@ -23,14 +23,14 @@ c25 <- c("#E31A1C", # red"dodgerblue2",
          "darkorange4","brown")
 
 
-#json_file_versions <- "/Users/robertk/Office365/OneDrive - Kainos Software Ltd/Documents/VelocityReporting/data/VelocityIssues2016-08-17 08.42.49.522788.csv"
+#json_file_versions <- "./data/VelocityIssues2016-08-17 08.42.49.522788.csv"
 #versions <- stream_in(file(json_file_versions))
 
 getLatestFile <- function(filePattern)
 {
-    files <- list.files(path = "/Users/robertk/Office365/OneDrive - Kainos Software Ltd/Documents/VelocityReporting/data/", pattern = filePattern)
+    files <- list.files(path = "./data/", pattern = filePattern)
     files <- sort(files, decreasing = TRUE)
-    latestFile <- paste("/Users/robertk/Office365/OneDrive - Kainos Software Ltd/Documents/VelocityReporting/data/", files[1], sep = "")
+    latestFile <- paste("./data/", files[1], sep = "")
 
     return(latestFile)
 }
@@ -49,9 +49,9 @@ componentIssue <- read.csv(
 #View(componentIssue)
 #stop()
 
-#files <- list.files(path = "/Users/robertk/Office365/OneDrive - Kainos Software Ltd/Documents/VelocityReporting/data/", pattern = "VelocityIssues2016.*.csv")
+#files <- list.files(path = "./data/", pattern = "VelocityIssues2016.*.csv")
 #files <- sort(files, decreasing = TRUE)
-#latestFile <- paste("/Users/robertk/Office365/OneDrive - Kainos Software Ltd/Documents/VelocityReporting/data/", files[1], sep = "")
+#latestFile <- paste("./data/", files[1], sep = "")
 latestFile <- getLatestFile("VelocityIssues2016.*.csv")
 
 #stop()
@@ -63,7 +63,7 @@ issues <- read.csv(
 #githubLatestFile <- getLatestFile('GitHubIssues2016.*.csv')
 
 #gitHubComments <- read.csv(githubLatestFile,
-  #file = "/Users/robertk/Office365/OneDrive - Kainos Software Ltd/Documents/VelocityReporting/data/GitHubIssues2016-08-02 09.25.14.408001.csv",
+  #file = "./data/GitHubIssues2016-08-02 09.25.14.408001.csv",
 #  head=TRUE,sep=",", dec=".", stringsAsFactors=FALSE)
 
 
@@ -183,7 +183,7 @@ componentsAggr <- merge(componentsList, componentsAggr, by=c("project", "compone
 #-----------------------------------------------------------------------------------------------------------------------
 #get reviewers data for issues & components
 githubJiraMpping <- read.csv(
-  file= '/Users/robertk/Office365/OneDrive - Kainos Software Ltd/Documents/VelocityReporting/JiraGithubMapping.csv',
+  file= './JiraGithubMapping.csv',
   head=TRUE,sep=";", dec=".", stringsAsFactors=FALSE)
 #View(githubJiraMpping)
 reviewers <- merge(reviewers, githubJiraMpping, by.x = 'reviewer', by.y = 'Github', all = TRUE )
