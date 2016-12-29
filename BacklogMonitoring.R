@@ -18,9 +18,9 @@ projects <- c('VEL', 'VBS', 'VIN')
 
 getLatestFile <- function(filePattern)
 {
-  files <- list.files(path = "/Users/robertk/Office365/OneDrive - Kainos Software Ltd/Documents/VelocityReporting/data/", pattern = filePattern)
+  files <- list.files(path = "./data/", pattern = filePattern)
   files <- sort(files, decreasing = TRUE)
-  latestFile <- paste("/Users/robertk/Office365/OneDrive - Kainos Software Ltd/Documents/VelocityReporting/data/", files[1], sep = "")
+  latestFile <- paste("./data/", files[1], sep = "")
   
   return(latestFile)
 }
