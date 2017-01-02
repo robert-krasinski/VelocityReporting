@@ -37,3 +37,5 @@ VelocityReporting.Rproj
 *.txt
 
 *.zip
+
+.Rhistory
