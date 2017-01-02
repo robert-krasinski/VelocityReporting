@@ -1,3 +1,5 @@
+if(!exists("capacityExcel")) print ("capacityExcel variable doesn't exist. Please execute executeCapacityVsEstimates.R.")
+
 library(xlsx)
 require(plyr)
 require(lubridate)
@@ -632,11 +634,17 @@ for (currentProject in projects) {
   finishDate <- as.POSIXct.Date(finishDate)
   
   capacityToEstimationRatioMeanLast3 <- tail(burndownPerProject$CapacityToEstimationRationMeanLast3, n = 1)
-  contingency <- sumSprintCapacity(currentProject, finishDate, plannedFinishDate )
-  contingency <- floor(contingency / capacityToEstimationRatioMeanLast3)
+  if(finishDate < plannedFinishDate) difference <- sumSprintCapacity(currentProject, finishDate, plannedFinishDate )
+  else difference <- sumSprintCapacity(currentProject, plannedFinishDate, finishDate )
+  
+  difference <- round(abs(difference / capacityToEstimationRatioMeanLast3), digits = 1)
   
   #stop()
-  contingencyLabel <- paste("Contingency [ideal days]: ", contingency, sep = " ")
+  if(finishDate < plannedFinishDate)
+    differenceLabel <- paste("Contingency [ideal days]: ", difference, sep = " ")
+  else 
+    differenceLabel <- paste("Difference [ideal days]: ", difference, sep = " ")
+  
   #stop()
   
   #sprintsPerProject <- sprintsPerProject[complete.cases(sprintsPerProject),]
@@ -664,9 +672,10 @@ for (currentProject in projects) {
     geom_text(mapping=aes(x=as.Date(finishDate), y=5, label=as.Date(finishDate)), size=4, angle=90, vjust=-0.4, hjust=0) + 
     geom_vline(xintercept=as.numeric(as.Date(plannedFinishDate)), linetype="dotted") +
     geom_text(mapping=aes(x=as.Date(plannedFinishDate), y=5, label=plannedFinishDateLabel), size=4, angle=90, vjust=1.2, hjust=0) +
-    geom_text(mapping=aes(x=Sys.Date(), y=contingency, label=contingencyLabel), vjust=1.2, hjust=0, family = "Helvetica") +
-    geom_hline(yintercept=contingency, linetype="dotted") 
+    # +
+    geom_hline(yintercept=difference, linetype="dotted") 
     
+    plot = plot + geom_text(mapping=aes(x=Sys.Date(), y=difference, label=differenceLabel), vjust=1.2, hjust=0, family = "Helvetica")
     
   print(plot)
 }
