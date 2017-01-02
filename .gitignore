@@ -39,3 +39,5 @@ VelocityReporting.Rproj
 *.zip
 
 .Rhistory
+
+*.html
