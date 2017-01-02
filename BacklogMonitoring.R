@@ -104,21 +104,57 @@ backlog <- merge(backlog, epicIssueNoVXT, by.x ="key.child1", by.y = "epic", all
 #View(backlog)
 #stop()
 
-backlog$pathString <- paste("VXT", 
-                            backlog$fixVersion.vxt, 
-                            paste(backlog$key, backlog$summary.vxt, backlog$status.vxt, sep = ", "),
-                            backlog$minorVersion.child1,
-                            paste(backlog$key.child1, backlog$type.child1, backlog$summary.child1, 
-                                  backlog$status.child1, sep = ", ") , sep = "/")
+
 
 #View(backlog)
 #stop()
 
+#according to this so question. apostrophes can break plot
+#http://stackoverflow.com/questions/40401045/large-data-tree-causes-plot-to-error
+backlog$summaryCleaned.vxt <- gsub("'", " ", backlog$summary.vxt)
+backlog$summaryCleaned.child1 <- gsub("'", " ", backlog$summary.child1)
+#View(backlog)
+#stop()
+
+backlog$pathString <- paste("VXT", 
+                            backlog$fixVersion.vxt, 
+                            paste(backlog$key, backlog$summaryCleaned.vxt, backlog$status.vxt, sep = ", "),
+                            backlog$minorVersion.child1,
+                            paste(backlog$key.child1, backlog$type.child1, backlog$summaryCleaned.child1, 
+                                  backlog$status.child1, sep = ", ") , sep = "/")
 
 backlogTree <- as.Node(backlog)
 print(backlogTree, limit = 200)
-#plot(backlogTree)
+SetGraphStyle(backlogTree, rankdir = "LR")
+GetNodeShape <- function(node){
+  #print( node$name )
+  return("underline")
+} 
 
+GetNodeColor <- function(node){
+  
+  if(grepl( c("Awaiting Prioritisation"), node$name)) return("red")
+  if(grepl( c("Idea"), node$name)) return("red")
+  if(grepl( c("Tech. Scoping"), node$name)) return("red")
+  if(grepl( c("Refinement"), node$name)) return("red")
+  if(grepl( c("Completed"), node$name)) return("green")
+  if(grepl( c("Awaiting Review"), node$name)) return("green")
+  if(grepl( c("In Progress"), node$name)) return("orange")
+  
+  
+  return("black")
+  
+} 
+
+SetNodeStyle(backlogTree, fontname = 'helvetica', shape = GetNodeShape, color = GetNodeColor)
+plot(backlogTree)
+
+
+
+
+plot(backlogTree)
+warnings()
+stop()
 
 backlogIssues <- issues[issues$status == 'Backlog',]
 backlogIssues <- merge(backlogIssues, linkedVXT, by.x = 'key', by.y = 'key', 
