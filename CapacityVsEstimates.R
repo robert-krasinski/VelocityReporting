@@ -160,7 +160,7 @@ sprints[sprints$id == 355 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.P
 #sprints[sprints$id == 328 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2016-12-5 10:00')
 #sprints[sprints$id == 329 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2016-12-6 10:00')
 #sprints[sprints$id == 329 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2016-12-19 10:00')
-sprints[sprints$id == 330 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2016-1-3 10:00')
+sprints[sprints$id == 330 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2017-1-3 10:00')
 sprints[sprints$id == 330 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-1-16 10:00')
 sprints[sprints$id == 332 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2017-1-17 10:00')
 sprints[sprints$id == 332 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-1-30 10:00')
@@ -227,7 +227,7 @@ sprintIssues <- read.csv(
   file= latestSprintIssueFile,
   head=TRUE,sep=",", dec=".", stringsAsFactors=FALSE)
 
-#sprintIssues <- sprintIssues[sprintIssues$sprintId == '324',]
+#sprintIssues <- sprintIssues[sprintIssues$sprintId == '330',]
 #View(sprintIssues)
 #stop()
 
@@ -264,11 +264,11 @@ issues$remainingEstimate[is.na(issues$remainingEstimate) ] <- 0
 
 sprintsWithIssues <- merge(sprintIssues, issues, by="key", all.x = TRUE)
 sprintsWithIssues <- sprintsWithIssues[sprintsWithIssues$status != 'Rejected',]
-#temp <- sprintsWithIssues[sprintsWithIssues$status == 'Rejected',]
+#temp <- sprintsWithIssues[sprintsWithIssues$sprintId == '330',]
 #View(temp)
 #stop()
 sprintsWithIssues <- merge(sprintsWithIssues, sprints, by.x ="sprintId", by.y = "id", all.x = TRUE, all.y = TRUE)
-#sprintsWithIssues <- sprintsWithIssues[sprintsWithIssues$sprintId == 300,]
+#sprintsWithIssues <- sprintsWithIssues[sprintsWithIssues$sprintId == 330,]
 #View(sprintsWithIssues)
 #stop()
 #temp <- sprintsWithIssues[sprintsWithIssues$sprintId == 324,]
@@ -305,7 +305,7 @@ colnames(sprintsAggregated )[1] <- "sprintId"
 colnames(sprintsAggregated )[2] <- "originalEstimationSum"
 colnames(sprintsAggregated )[3] <- "remainingEstimationSum"
 #colnames(sprintsAggregated )[2] <- "project"
-#sprintsAggregated <- sprintsAggregated[sprintsAggregated$sprintId == 324,]
+#sprintsAggregated <- sprintsAggregated[sprintsAggregated$sprintId == 330,]
 #View(sprintsAggregated)
 #stop()
 
