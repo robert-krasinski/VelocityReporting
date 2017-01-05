@@ -32,7 +32,7 @@ linkedVXT <- read.csv(
 
 linkedVXT <- linkedVXT[startsWith(linkedVXT$linkedKey, 'VXT'),]
 
-latestFile <- getLatestFile("VelocityIssues2016.*.csv")
+latestFile <- getLatestFile("VelocityIssues.*.csv")
 issues <- read.csv(
   file= latestFile,
   head=TRUE,sep=",", dec=".", stringsAsFactors=FALSE)
@@ -44,90 +44,228 @@ issues <- subset(issues, select=-c(id, sprint, updated, priority,
                                      movedToComplete,	aggregatetimeoriginalestimate,
                                      timeoriginalestimate,	transitions,	remainingEstimate))
 
-latestFile <- getLatestFile("VelocityVXTAndEpic.*.csv")
-vxtEpic <- read.csv(
+latestFile <- getLatestFile("VXTAndRelated.*.csv")
+vxtAndRelated <- read.csv(
   file= latestFile,
   head=TRUE,sep=",", dec=".", stringsAsFactors=FALSE)
 
-vxtEpic <- subset(vxtEpic, select=-c(id, sprint, updated, priority, 
+vxtAndRelated <- subset(vxtAndRelated, select=-c(id, sprint, updated, priority, 
                                      severity, component, created,
                                      reporter, devOwner,
                                      workTimeToComplete, timeToComplete,
                                      movedToComplete,	aggregatetimeoriginalestimate,
-                                     timeoriginalestimate,	transitions,	remainingEstimate))
-vxtEpic$summary <- gsub("/", "", vxtEpic$summary)
-vxtEpic <- vxtEpic[!vxtEpic$fixVersion %in% c('0.2 ', 'POC ', 
+                                     timeoriginalestimate,	transitions,	remainingEstimate,
+                                     codeReviewToDev, testsToDev))
+vxtAndRelated$summary <- gsub("/", "", vxtAndRelated$summary)
+
+#remove vxts with not applicable versions
+vxtAndRelated <- vxtAndRelated[!(vxtAndRelated$fixVersion %in% c('0.2 ','0.3 ', 'POC ', 
                                               'Post ITH Go-Live 1.4 ', 'Post ITH Go-Live 1.3 ',
                                               'Post ITH Go-Live 1.1 ', 'Post ITH Go-Live 1.2 ',
                                               'Post ITH Go-Live ', '2.0 ', '3.0 ', 'Activiti ',
-                                              ''),]
-#View(vxtEpic)
+                                              '') & vxtAndRelated$project == 'VXT'),]
+#do not display rejected issues
+vxtAndRelated <- vxtAndRelated[vxtAndRelated$status != 'Rejected',]
+#vxtAndRelated <- vxtAndRelated[vxtAndRelated$key == 'VWF-1699',]
+
+#View(vxtAndRelated)
 #stop()
 
-latestFile <- getLatestFile("EpicIssue.*.csv")
-epicIssue <- read.csv(
+latestFile <- getLatestFile("RelatedIssues.*.csv")
+issueLinks <- read.csv(
   file= latestFile,
   head=TRUE,sep=",", dec=".", stringsAsFactors=FALSE)
-#View(epicIssue)
+#View(issueLinks)
 #stop()
 
-vxtIssues <- vxtEpic[vxtEpic$project == 'VXT',]
+vxtIssues <- vxtAndRelated[vxtAndRelated$project == 'VXT',]
 vxtIssues <- vxtIssues[!vxtIssues$status %in% c('Done', 'Rejected'),]
 vxtIssues <- vxtIssues[order(vxtIssues$fixVersion),]
 
 #View(vxtIssues)
 #stop()
 
-epics <- vxtEpic[vxtEpic$project != 'VXT',]
+#epics <- vxtEpic[vxtEpic$project != 'VXT',]
 
-epicsAndIssues <- rbind(epics, issues)
-#epics <- epics[epics$key == 'VBS-1150',]
+#relatedIssues <- vxtAndRelated
+#epics <- epics[epics$key == 'VBS-1545',]
 
-#epicsAndIssues <- epicsAndIssues[!epics$status %in% c('Done', 'Rejected'),]
-#View(epics)
+#relatedIssues <- relatedIssues[!epics$status %in% c('Done', 'Rejected'),]
+#relatedIssues <- relatedIssues[relatedIssues$key == 'II-778',]
+#View(relatedIssues)
 #stop()
 
 
+createBacklogNodes <- function()
+{
+  backlog <- merge(vxtIssues, issueLinks, by.x ="key", by.y = "epic", all.x = TRUE)
+  backlog <- merge(backlog, relatedIssues, by.x = 'issue', by.y = 'key', all.x = TRUE, suffixes = c('.vxt', '.child1'))
+  backlog$key.child1 <- backlog$issue
+  
+  issueLinksNoVXT <- issueLinks[substr(issueLinks$epic, 1, 3) != 'VXT',]
+  issueLinksNoVXT <- issueLinksNoVXT[substr(issueLinksNoVXT$issue, 1, 3) != 'VXT',]
+  #View(issueLinksNoVXT)
+  #stop()
+  
+  backlog <- merge(backlog, issueLinksNoVXT, by.x ="key.child1", by.y = "epic", all.x = TRUE, suffixes = c('.child1.1', '.child2'))
+  #backlog$key.child2 <- backlog$issue.x
+  #View(backlog)
+  #stop()
+  
+  
+  
+  #View(backlog)
+  #stop()
+  
+  #according to this so question. apostrophes can break plot
+  #http://stackoverflow.com/questions/40401045/large-data-tree-causes-plot-to-error
+  backlog$summaryCleaned.vxt <- gsub("'", " ", backlog$summary.vxt)
+  backlog$summaryCleaned.child1 <- gsub("'", " ", backlog$summary.child1)
+  #View(backlog)
+  #stop()
+  
+  backlog$pathString <- paste("VXT", 
+                              backlog$fixVersion.vxt, 
+                              paste(backlog$key, backlog$summaryCleaned.vxt, backlog$status.vxt, sep = ", "),
+                              backlog$minorVersion.child1,
+                              paste(backlog$key.child1, backlog$type.child1, backlog$summaryCleaned.child1, 
+                                    backlog$status.child1, sep = ", ") , sep = "/")
+  
+  backlogTree <- as.Node(backlog)
+}
 
+createBacklogNodes2 <- function()
+{
+  colnames(linkedVXT)[colnames(linkedVXT)=="key"] <- "key.child1"
+  backlog <- merge(vxtIssues, linkedVXT, by.x ="key", by.y = "linkedKey", all.x = TRUE, suffixes = c('.vxt', '.child1'))
+  
+  
+  backlog <- merge(backlog, issues, by.x = 'key.child1', by.y = 'key', all.x = TRUE, suffixes = c('.vxt', '.child1'))
+  
+  #View(backlog)
+  #stop()
+  #backlog$key.child1 <- backlog$issue
+  
+  #issueLinksNoVXT <- issueLinks[substr(issueLinks$epic, 1, 3) != 'VXT',]
+  #issueLinksNoVXT <- issueLinksNoVXT[substr(issueLinksNoVXT$issue, 1, 3) != 'VXT',]
+  #View(issueLinksNoVXT)
+  #stop()
+  
+  #backlog <- merge(backlog, issueLinksNoVXT, by.x ="key.child1", by.y = "epic", all.x = TRUE, suffixes = c('.child1.1', '.child2'))
+  #backlog$key.child2 <- backlog$issue.x
+  
+  
+  
+  
+  #View(backlog)
+  #stop()
+  
+  #according to this so question. apostrophes can break plot
+  #http://stackoverflow.com/questions/40401045/large-data-tree-causes-plot-to-error
+  backlog$summaryCleaned.vxt <- gsub("'", " ", backlog$summary.vxt)
+  backlog$summaryCleaned.child1 <- gsub("'", " ", backlog$summary.child1)
+  #backlog$summaryCleaned.child1 <- gsub("'", " ", backlog$summary.child1)
+  #View(backlog)
+  #stop()
+  #View(backlog)
+  backlog <- backlog[order(backlog$fixVersion.vxt),]
+  backlog$pathString <- paste("VXT", 
+                              backlog$fixVersion.vxt, 
+                              paste(backlog$key, backlog$summaryCleaned.vxt, backlog$status.vxt, sep = ", "),
+                              backlog$minorVersion.child1,
+                              paste(backlog$key.child1, backlog$type.child1, backlog$summaryCleaned.child1, backlog$status.child1, sep = ", "),
+                              #      backlog$status.child1, sep = ", ")
+                              sep = "/")
+  backlog$pathString <- gsub("NA", "", backlog$pathString)
+  
+  #stop()
+  backlogTree <- as.Node(backlog)
+}
 
-backlog <- merge(vxtIssues, epicIssue, by.x ="key", by.y = "epic", all.x = TRUE)
-backlog <- merge(backlog, epicsAndIssues, by.x = 'issue', by.y = 'key', all.x = TRUE, suffixes = c('.vxt', '.child1'))
-backlog$key.child1 <- backlog$issue
+createBacklogNodes3 <- function()
+{
+  issueLinksFiltered <- issueLinks[!grepl('VXT',issueLinks$linkedKey),]
+  issueLinksFiltered <- issueLinksFiltered[!grepl('VMCM',issueLinksFiltered$key),]
+  issueLinksFiltered <- issueLinksFiltered[!grepl('VMCM',issueLinksFiltered$linkedKey),]
+  issueLinksFiltered <- issueLinksFiltered[!grepl('ITH',issueLinksFiltered$linkedKey),]
+  issueLinksFiltered <- issueLinksFiltered[!grepl('ITH',issueLinksFiltered$key),]
+  #View(issueLinksFiltered)
+  #stop()
+  
+  backlog <- merge(vxtIssues, issueLinksFiltered, by.x ="key", by.y = "key", all.x = TRUE, suffixes = c('.vxt', '.child1'))
+  
+  #View(backlog)
+  #stop()
+  #vxtAndRelatedTmp <- vxtAndRelated[vxtAndRelated$key == 'VEL-1541',]
+  #View(vxtAndRelatedTmp)
+  #stop()
+  
+  backlog <- merge(backlog, vxtAndRelated, by.x = 'linkedKey', by.y = 'key', all.x = TRUE, suffixes = c('.vxt', '.child1'))
+  backlog$key.child1 <- backlog$linkedKey
+  
+  backlog <- merge(backlog, issueLinksFiltered, by.x ="key.child1", by.y = "key", all.x = TRUE, suffixes = c('.child1', '.child2'))
+  backlog <- merge(backlog, vxtAndRelated, by.x = 'linkedKey.child2', by.y = 'key', all.x = TRUE, suffixes = c('.child1', '.child2'))
+  
+  colnames(backlog)[which(names(backlog) == "minorVersion")] <- "minorVersion.child2"
+  colnames(backlog)[which(names(backlog) == "linkedKey.child2")] <- "key.child2"
+  colnames(backlog)[which(names(backlog) == "fixVersion")] <- "fixVersion.child2"
+  colnames(backlog)[which(names(backlog) == "type")] <- "type.child2"
+  colnames(backlog)[which(names(backlog) == "status")] <- "status.child2"
+  colnames(backlog)[which(names(backlog) == "project")] <- "project.child2"
+  colnames(backlog)[which(names(backlog) == "summary")] <- "summary.child2"
+  
+  #backlog$minorVersion.child2 <- backlog$minorVersion
+  #backlog$key.child2 <- backlog$
+  
+  #backlog$key.child1
+  #backlogTmp <- subset(backlog, select=c(linkedkey.child1))
+  #View(backlog)
+  #stop()
+  
+  
+  
+  
+  
+  
+  #View(backlog)
+  #stop()
+  
+  #according to this so question. apostrophes can break plot
+  #http://stackoverflow.com/questions/40401045/large-data-tree-causes-plot-to-error
+  backlog$summaryCleaned.vxt <- gsub("'", " ", backlog$summary.vxt)
+  backlog$summaryCleaned.child1 <- gsub("'", " ", backlog$summary.child1)
+  backlog$summaryCleaned.vxt <- gsub("/", " ", backlog$summaryCleaned.vxt)
+  backlog$summaryCleaned.child1 <- gsub("/", " ", backlog$summaryCleaned.child1)
+  backlog$summaryCleaned.child2 <- gsub("'", " ", backlog$summary.child2)
+  backlog$summaryCleaned.child2 <- gsub("/", " ", backlog$summaryCleaned.child2)
+  #backlog$summaryCleaned.child1 <- gsub("'", " ", backlog$summary.child1)
+  
+  #View(backlog)
+  backlog <- backlog[order(backlog$fixVersion.vxt),]
+  backlog$pathString <- paste("VXT", 
+                              backlog$fixVersion.vxt, 
+                              paste(backlog$key, backlog$summaryCleaned.vxt, backlog$status.vxt, sep = ", "),
+                              backlog$minorVersion.child1,
+                              paste(backlog$key.child1, backlog$type.child1, backlog$summaryCleaned.child1, backlog$status.child1, sep = ", "),
+                              backlog$minorVersion.child2,
+                              paste(backlog$key.child2, backlog$type.child2, backlog$summaryCleaned.child2, backlog$status.child2, sep = ", "),
+                              sep = "/")
+  backlog$pathString <- gsub("NA", "", backlog$pathString)
+  
+  #View(backlog)
+  #stop()
+  #stop()
+  backlogTree <- as.Node(backlog)
+}
 
-epicIssueNoVXT <- epicIssue[substr(epicIssue$epic, 1, 3) != 'VXT',]
-epicIssueNoVXT <- epicIssueNoVXT[substr(epicIssueNoVXT$issue, 1, 3) != 'VXT',]
-#View(epicIssueNoVXT)
-#stop()
-
-backlog <- merge(backlog, epicIssueNoVXT, by.x ="key.child1", by.y = "epic", all.x = TRUE, suffixes = c('.child1.1', '.child2'))
-#backlog$key.child2 <- backlog$issue.x
-#View(backlog)
-#stop()
-
-
-
-#View(backlog)
-#stop()
-
-#according to this so question. apostrophes can break plot
-#http://stackoverflow.com/questions/40401045/large-data-tree-causes-plot-to-error
-backlog$summaryCleaned.vxt <- gsub("'", " ", backlog$summary.vxt)
-backlog$summaryCleaned.child1 <- gsub("'", " ", backlog$summary.child1)
-#View(backlog)
-#stop()
-
-backlog$pathString <- paste("VXT", 
-                            backlog$fixVersion.vxt, 
-                            paste(backlog$key, backlog$summaryCleaned.vxt, backlog$status.vxt, sep = ", "),
-                            backlog$minorVersion.child1,
-                            paste(backlog$key.child1, backlog$type.child1, backlog$summaryCleaned.child1, 
-                                  backlog$status.child1, sep = ", ") , sep = "/")
-
-backlogTree <- as.Node(backlog)
+backlogTree <- createBacklogNodes3()
 print(backlogTree, limit = 200)
+
+
 SetGraphStyle(backlogTree, rankdir = "LR")
+
 GetNodeShape <- function(node){
-  #print( node$name )
+  if(grepl( c("Epic"), node$name)) return("ellipse")
   return("underline")
 } 
 
@@ -135,11 +273,14 @@ GetNodeColor <- function(node){
   
   if(grepl( c("Awaiting Prioritisation"), node$name)) return("red")
   if(grepl( c("Idea"), node$name)) return("red")
+  if(grepl( c("Backlog"), node$name)) return("red")
   if(grepl( c("Tech. Scoping"), node$name)) return("red")
   if(grepl( c("Refinement"), node$name)) return("red")
   if(grepl( c("Completed"), node$name)) return("green")
   if(grepl( c("Awaiting Review"), node$name)) return("green")
   if(grepl( c("In Progress"), node$name)) return("orange")
+  if(grepl( c("In Development"), node$name)) return("orange")
+  if(grepl( c("Ready to Test"), node$name)) return("orange")
   
   
   return("black")
@@ -150,11 +291,8 @@ SetNodeStyle(backlogTree, fontname = 'helvetica', shape = GetNodeShape, color = 
 plot(backlogTree)
 
 
-
-
-plot(backlogTree)
-warnings()
-stop()
+#warnings()
+#stop()
 
 backlogIssues <- issues[issues$status == 'Backlog',]
 backlogIssues <- merge(backlogIssues, linkedVXT, by.x = 'key', by.y = 'key', 
