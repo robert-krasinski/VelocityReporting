@@ -21,7 +21,7 @@ Component = namedtuple('Component', ['component', 'project'], verbose=False)
 
 SprintIssue = namedtuple('SprintIssue', ['key', 'sprintId'], verbose=False)
 ComponentIssue = namedtuple('ComponentIssue', ['key', 'component'], verbose=False)
-EpicIssue = namedtuple('EpicIssue', ['epic', 'issue'], verbose=False)
+#EpicIssue = namedtuple('EpicIssue', ['epic', 'issue'], verbose=False)
 IssueLink = namedtuple('IssueLink', ['key', 'linkedKey'], verbose=False)
 
 Issue = namedtuple('Issue',
@@ -510,84 +510,27 @@ def getConcatenatedVersions(fixVersions):
 
 
 
-def GetVXTAndEpics():
-    #global startAt, issueComponents, component, sprint, issue, issuesFilename, f, w, row
-    startAt = 0
-    maxResults = 50
-    issueList = list()
-    epicIssueList = list()
+def GetVXTAndRelated():
+    relatedIssuesList, issueList = GetVXTAndRelatedLists("/rest/api/2/search?jql=(project+%3D+%22VELOCITY+Product%22)&startAt=")
 
-    while True:
-        url = options.jira_url + "/rest/api/2/search?jql=(project+%3D+%22VELOCITY+Product%22)+or+(project+in+(vel%2C+vin%2C+vbs)+and+type+%3D+epic)&startAt=" + str(
-            startAt)
+    #load related issues
+    searchUrl = "/rest/api/2/search?jql=id+in+%28"
+    #get related issues
+    for relation in relatedIssuesList:
+        searchUrl += relation.linkedKey + ","
 
+    #remove last ,
+    searchUrl = searchUrl[:-1]
+    searchUrl += "%29&startAt="
+    #searchUrl = "/rest/api/2/search?jql=id+in+%28VXT-219%29&startAt="
 
-        print url
-        response = jsonFetcher.getJSON(url)
-
-        for jsonIssue in response['issues']:
-
-            key = jsonIssue['key']
-            issueId = jsonIssue['id']
-            print key
-            fields = jsonIssue['fields']
-
-            #fixVersionName = getMajorVersion(fields['fixVersions'])
-            fixVersionName = getConcatenatedVersions(fields['fixVersions'])
-            minorVersion = getMinorVersion(fields['fixVersions'])
-            # fixVersionName = fix_version['name'] if (fix_version) else None
+    relatedIssuesList2ndLevel, issueList2ndLevel = GetVXTAndRelatedLists(searchUrl)
+    issueList += issueList2ndLevel
+    relatedIssuesList += relatedIssuesList2ndLevel
 
 
-            for linkedIssue in fields[u'issuelinks']:
-                if 'inwardIssue' in linkedIssue:
-                    issueKey = linkedIssue[u'inwardIssue'][u'key']
-                else:
-                    issueKey = linkedIssue[u'outwardIssue'][u'key']
 
-                epicIssue = EpicIssue(
-                    epic= key,
-                    issue= issueKey
-                )
-                epicIssueList.append(epicIssue)
-
-            # for history in issue['histories']:
-            priority = fields['priority']
-            issue = Issue(
-                id= issueId,
-                project= fields['project']['key'],
-                key= key,
-                summary= fields['summary'],
-                sprint = None,
-                updated = fields['updated'],
-                component = None,
-                priority = priority['name'] if (priority) else None,
-                severity = None,
-                fixVersion = fixVersionName,
-                minorVersion= minorVersion,
-                type = fields['issuetype']['name'],
-                created = fields['created'],
-                reporter = fields['reporter']['displayName'],
-                status = fields['status']['name'],
-                devOwner = None,
-                timeToComplete = None,
-                workTimeToComplete = None,
-                movedToComplete = None,
-                aggregatetimeoriginalestimate = fields['aggregatetimeoriginalestimate'],  # in seconds,
-                timeoriginalestimate = fields['aggregatetimeoriginalestimate'],
-                transitions = None,
-                codeReviewToDev=None,
-                testsToDev=None,
-                remainingEstimate = fields['timeestimate']
-
-            )
-            issueList.append(issue)
-        # break;
-        # check if all is retrieved
-        startAt = startAt + maxResults;
-        if (startAt >= response['total']):
-            break;
-
-    issuesFilename = os.getcwd() + "/data/VelocityVXTAndEpic" + str(datetime.datetime.now()) + ".csv"
+    issuesFilename = os.getcwd() + "/data/VXTAndRelated" + str(datetime.datetime.now()) + ".csv"
     issuesFilename = issuesFilename.replace(":", ".")
     print issuesFilename
     with open(issuesFilename, 'w') as f:
@@ -601,17 +544,94 @@ def GetVXTAndEpics():
             # print row
             w.writerow(row)
 
-    epicIssueFilename = os.getcwd() + "/data/EpicIssue" + str(datetime.datetime.now()) + ".csv"
+    epicIssueFilename = os.getcwd() + "/data/RelatedIssues" + str(datetime.datetime.now()) + ".csv"
     epicIssueFilename = epicIssueFilename.replace(":", ".")
     print epicIssueFilename
 
     with open(epicIssueFilename, 'w') as f:
         w = csv.writer(f)
-        w.writerow(('epic', 'issue'))  # field header
-        for row in epicIssueList:
+        w.writerow(('key', 'linkedKey'))  # field header
+        for row in relatedIssuesList:
             # print row
             w.writerow(row)
     pass
+
+
+def GetVXTAndRelatedLists(searchUrl):
+    # global startAt, issueComponents, component, sprint, issue, issuesFilename, f, w, row
+    startAt = 0
+    maxResults = 50
+    issueList = list()
+    relatedIssues = list()
+    while True:
+        url = options.jira_url + searchUrl + str(
+            startAt)
+
+        print url
+        response = jsonFetcher.getJSON(url)
+
+        for jsonIssue in response['issues']:
+
+            key = jsonIssue['key']
+            issueId = jsonIssue['id']
+            print key
+            fields = jsonIssue['fields']
+
+            # fixVersionName = getMajorVersion(fields['fixVersions'])
+            fixVersionName = getConcatenatedVersions(fields['fixVersions'])
+            minorVersion = getMinorVersion(fields['fixVersions'])
+            # fixVersionName = fix_version['name'] if (fix_version) else None
+
+
+            for linkedIssue in fields[u'issuelinks']:
+                if 'inwardIssue' in linkedIssue:
+                    issueKey = linkedIssue[u'inwardIssue'][u'key']
+                else:
+                    issueKey = linkedIssue[u'outwardIssue'][u'key']
+
+                epicIssue = IssueLink(
+                    key=key,
+                    linkedKey=issueKey
+                )
+                relatedIssues.append(epicIssue)
+
+            # for history in issue['histories']:
+            priority = fields['priority']
+            issue = Issue(
+                id=issueId,
+                project=fields['project']['key'],
+                key=key,
+                summary=fields['summary'],
+                sprint=None,
+                updated=fields['updated'],
+                component=None,
+                priority=priority['name'] if (priority) else None,
+                severity=None,
+                fixVersion=fixVersionName,
+                minorVersion=minorVersion,
+                type=fields['issuetype']['name'],
+                created=fields['created'],
+                reporter=fields['reporter']['displayName'],
+                status=fields['status']['name'],
+                devOwner=None,
+                timeToComplete=None,
+                workTimeToComplete=None,
+                movedToComplete=None,
+                aggregatetimeoriginalestimate=fields['aggregatetimeoriginalestimate'],  # in seconds,
+                timeoriginalestimate=fields['aggregatetimeoriginalestimate'],
+                transitions=None,
+                codeReviewToDev=None,
+                testsToDev=None,
+                remainingEstimate=fields['timeestimate']
+
+            )
+            issueList.append(issue)
+        # break;
+        # check if all is retrieved
+        startAt = startAt + maxResults;
+        if (startAt >= response['total']):
+            break;
+    return relatedIssues, issueList
 
 
 def createOutputFolder():
@@ -640,12 +660,12 @@ jsonFetcher = Fetcher(options.jira_url, auth)
 
 
 createOutputFolder()
-
+GetVXTAndRelated()
 
 #GetReviewersFromGithub()
 GetSprintIssuesFromJira()
 GetComponentsFromJira()
-GetVXTAndEpics()
+
 GetJiraIssues()
 
 
