@@ -514,19 +514,20 @@ def GetVXTAndRelated():
     relatedIssuesList, issueList = GetVXTAndRelatedLists("/rest/api/2/search?jql=(project+%3D+%22VELOCITY+Product%22)&startAt=")
 
     #load related issues
-    searchUrl = "/rest/api/2/search?jql=id+in+%28"
-    #get related issues
-    for relation in relatedIssuesList:
-        searchUrl += relation.linkedKey + ","
-
-    #remove last ,
-    searchUrl = searchUrl[:-1]
-    searchUrl += "%29&startAt="
+    searchUrl = CreateUrlForRelatedIssues(relatedIssuesList)
     #searchUrl = "/rest/api/2/search?jql=id+in+%28VXT-219%29&startAt="
 
     relatedIssuesList2ndLevel, issueList2ndLevel = GetVXTAndRelatedLists(searchUrl)
     issueList += issueList2ndLevel
     relatedIssuesList += relatedIssuesList2ndLevel
+
+
+    relatedIssuesList2ndLevel = [x for x in relatedIssuesList2ndLevel if x.linkedKey.find("VXT") == -1]
+    relatedIssuesList2ndLevel = [x for x in relatedIssuesList2ndLevel if x.linkedKey.find("VMCM") == -1]
+    searchUrl = CreateUrlForRelatedIssues(relatedIssuesList2ndLevel)
+    relatedIssuesList3rdLevel, issueList3rdLevel = GetVXTAndRelatedLists(searchUrl)
+    issueList += issueList3rdLevel
+
 
 
 
@@ -555,6 +556,18 @@ def GetVXTAndRelated():
             # print row
             w.writerow(row)
     pass
+
+
+def CreateUrlForRelatedIssues(relatedIssuesList):
+    searchUrl = "/rest/api/2/search?jql=id+in+%28"
+    # get related issues
+    for relation in relatedIssuesList:
+        searchUrl += relation.linkedKey + ","
+
+    # remove last ,
+    searchUrl = searchUrl[:-1]
+    searchUrl += "%29&startAt="
+    return searchUrl
 
 
 def GetVXTAndRelatedLists(searchUrl):
@@ -597,6 +610,19 @@ def GetVXTAndRelatedLists(searchUrl):
 
             # for history in issue['histories']:
             priority = fields['priority']
+            issueType = fields['issuetype']['name']
+
+            if issueType == 'Epic' :
+                epicStoriesUrl = "/rest/api/2/search?jql=('Epic+Link'+in+%28" + key + "%29)&startAt="
+                epicRelatedIssues, epicChildrenList = GetVXTAndRelatedLists(epicStoriesUrl)
+                issueList += epicChildrenList
+                for epicChild in epicChildrenList:
+                    epicIssue = IssueLink(
+                        key=key,
+                        linkedKey=epicChild.key
+                    )
+                    relatedIssues.append(epicIssue)
+
             issue = Issue(
                 id=issueId,
                 project=fields['project']['key'],
@@ -609,7 +635,7 @@ def GetVXTAndRelatedLists(searchUrl):
                 severity=None,
                 fixVersion=fixVersionName,
                 minorVersion=minorVersion,
-                type=fields['issuetype']['name'],
+                type=issueType,
                 created=fields['created'],
                 reporter=fields['reporter']['displayName'],
                 status=fields['status']['name'],
@@ -658,11 +684,11 @@ jsonFetcher = Fetcher(options.jira_url, auth)
 
 
 
+#GetReviewersFromGithub()
 
 createOutputFolder()
 GetVXTAndRelated()
 
-#GetReviewersFromGithub()
 GetSprintIssuesFromJira()
 GetComponentsFromJira()
 
