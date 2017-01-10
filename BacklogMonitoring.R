@@ -96,91 +96,6 @@ vxtIssues <- vxtIssues[order(vxtIssues$fixVersion),]
 #stop()
 
 
-createBacklogNodes <- function()
-{
-  backlog <- merge(vxtIssues, issueLinks, by.x ="key", by.y = "epic", all.x = TRUE)
-  backlog <- merge(backlog, relatedIssues, by.x = 'issue', by.y = 'key', all.x = TRUE, suffixes = c('.vxt', '.child1'))
-  backlog$key.child1 <- backlog$issue
-  
-  issueLinksNoVXT <- issueLinks[substr(issueLinks$epic, 1, 3) != 'VXT',]
-  issueLinksNoVXT <- issueLinksNoVXT[substr(issueLinksNoVXT$issue, 1, 3) != 'VXT',]
-  #View(issueLinksNoVXT)
-  #stop()
-  
-  backlog <- merge(backlog, issueLinksNoVXT, by.x ="key.child1", by.y = "epic", all.x = TRUE, suffixes = c('.child1.1', '.child2'))
-  #backlog$key.child2 <- backlog$issue.x
-  #View(backlog)
-  #stop()
-  
-  
-  
-  #View(backlog)
-  #stop()
-  
-  #according to this so question. apostrophes can break plot
-  #http://stackoverflow.com/questions/40401045/large-data-tree-causes-plot-to-error
-  backlog$summaryCleaned.vxt <- gsub("'", " ", backlog$summary.vxt)
-  backlog$summaryCleaned.child1 <- gsub("'", " ", backlog$summary.child1)
-  #View(backlog)
-  #stop()
-  
-  backlog$pathString <- paste("VXT", 
-                              backlog$fixVersion.vxt, 
-                              paste(backlog$key, backlog$summaryCleaned.vxt, backlog$status.vxt, sep = ", "),
-                              backlog$minorVersion.child1,
-                              paste(backlog$key.child1, backlog$type.child1, backlog$summaryCleaned.child1, 
-                                    backlog$status.child1, sep = ", ") , sep = "/")
-  
-  backlogTree <- as.Node(backlog)
-}
-
-createBacklogNodes2 <- function()
-{
-  colnames(linkedVXT)[colnames(linkedVXT)=="key"] <- "key.child1"
-  backlog <- merge(vxtIssues, linkedVXT, by.x ="key", by.y = "linkedKey", all.x = TRUE, suffixes = c('.vxt', '.child1'))
-  
-  
-  backlog <- merge(backlog, issues, by.x = 'key.child1', by.y = 'key', all.x = TRUE, suffixes = c('.vxt', '.child1'))
-  
-  #View(backlog)
-  #stop()
-  #backlog$key.child1 <- backlog$issue
-  
-  #issueLinksNoVXT <- issueLinks[substr(issueLinks$epic, 1, 3) != 'VXT',]
-  #issueLinksNoVXT <- issueLinksNoVXT[substr(issueLinksNoVXT$issue, 1, 3) != 'VXT',]
-  #View(issueLinksNoVXT)
-  #stop()
-  
-  #backlog <- merge(backlog, issueLinksNoVXT, by.x ="key.child1", by.y = "epic", all.x = TRUE, suffixes = c('.child1.1', '.child2'))
-  #backlog$key.child2 <- backlog$issue.x
-  
-  
-  
-  
-  #View(backlog)
-  #stop()
-  
-  #according to this so question. apostrophes can break plot
-  #http://stackoverflow.com/questions/40401045/large-data-tree-causes-plot-to-error
-  backlog$summaryCleaned.vxt <- gsub("'", " ", backlog$summary.vxt)
-  backlog$summaryCleaned.child1 <- gsub("'", " ", backlog$summary.child1)
-  #backlog$summaryCleaned.child1 <- gsub("'", " ", backlog$summary.child1)
-  #View(backlog)
-  #stop()
-  #View(backlog)
-  backlog <- backlog[order(backlog$fixVersion.vxt),]
-  backlog$pathString <- paste("VXT", 
-                              backlog$fixVersion.vxt, 
-                              paste(backlog$key, backlog$summaryCleaned.vxt, backlog$status.vxt, sep = ", "),
-                              backlog$minorVersion.child1,
-                              paste(backlog$key.child1, backlog$type.child1, backlog$summaryCleaned.child1, backlog$status.child1, sep = ", "),
-                              #      backlog$status.child1, sep = ", ")
-                              sep = "/")
-  backlog$pathString <- gsub("NA", "", backlog$pathString)
-  
-  #stop()
-  backlogTree <- as.Node(backlog)
-}
 
 createBacklogNodes3 <- function()
 {
@@ -203,7 +118,14 @@ createBacklogNodes3 <- function()
   backlog <- merge(backlog, vxtAndRelated, by.x = 'linkedKey', by.y = 'key', all.x = TRUE, suffixes = c('.vxt', '.child1'))
   backlog$key.child1 <- backlog$linkedKey
   
+  
   backlog <- merge(backlog, issueLinksFiltered, by.x ="key.child1", by.y = "key", all.x = TRUE, suffixes = c('.child1', '.child2'))
+  
+  #backlogTmp <- backlog[backlog$key == 'VXT-190',]
+  #issueLinksFilteredTmp <- issueLinksFiltered[issueLinksFiltered$key == 'VDO-198',] 
+  #View(issueLinksFilteredTmp)
+  #stop()
+  
   backlog <- merge(backlog, vxtAndRelated, by.x = 'linkedKey.child2', by.y = 'key', all.x = TRUE, suffixes = c('.child1', '.child2'))
   
   colnames(backlog)[which(names(backlog) == "minorVersion")] <- "minorVersion.child2"
@@ -232,12 +154,12 @@ createBacklogNodes3 <- function()
   
   #according to this so question. apostrophes can break plot
   #http://stackoverflow.com/questions/40401045/large-data-tree-causes-plot-to-error
-  backlog$summaryCleaned.vxt <- gsub("'", " ", backlog$summary.vxt)
-  backlog$summaryCleaned.child1 <- gsub("'", " ", backlog$summary.child1)
-  backlog$summaryCleaned.vxt <- gsub("/", " ", backlog$summaryCleaned.vxt)
-  backlog$summaryCleaned.child1 <- gsub("/", " ", backlog$summaryCleaned.child1)
-  backlog$summaryCleaned.child2 <- gsub("'", " ", backlog$summary.child2)
-  backlog$summaryCleaned.child2 <- gsub("/", " ", backlog$summaryCleaned.child2)
+  backlog$summaryCleaned.vxt <- gsub("['\"/]", " ", backlog$summary.vxt)
+  backlog$summaryCleaned.child1 <- gsub("['\"/]", " ", backlog$summary.child1)
+  #backlog$summaryCleaned.vxt <- gsub("/", " ", backlog$summaryCleaned.vxt)
+  #backlog$summaryCleaned.child1 <- gsub("/", " ", backlog$summaryCleaned.child1)
+  backlog$summaryCleaned.child2 <- gsub("['\"]", " ", backlog$summary.child2)
+  #backlog$summaryCleaned.child2 <- gsub("/", " ", backlog$summaryCleaned.child2)
   #backlog$summaryCleaned.child1 <- gsub("'", " ", backlog$summary.child1)
   
   #View(backlog)
@@ -252,8 +174,11 @@ createBacklogNodes3 <- function()
                               sep = "/")
   backlog$pathString <- gsub("NA", "", backlog$pathString)
   
+  
+  #backlog <- backlog[backlog$fixVersion.vxt == '1.0 - ITH Live 0.20 ',]
   #View(backlog)
   #stop()
+  
   #stop()
   backlogTree <- as.Node(backlog)
 }
@@ -277,9 +202,12 @@ GetNodeColor <- function(node){
   if(grepl( c("Tech. Scoping"), node$name)) return("red")
   if(grepl( c("Refinement"), node$name)) return("red")
   if(grepl( c("Completed"), node$name)) return("green")
+  if(grepl( c("Done"), node$name)) return("green")
   if(grepl( c("Awaiting Review"), node$name)) return("green")
   if(grepl( c("In Progress"), node$name)) return("orange")
   if(grepl( c("In Development"), node$name)) return("orange")
+  if(grepl( c("In Testing"), node$name)) return("orange")
+  if(grepl( c("In Code review"), node$name)) return("orange")
   if(grepl( c("Ready to Test"), node$name)) return("orange")
   
   
