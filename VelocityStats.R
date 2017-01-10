@@ -35,14 +35,14 @@ getLatestFile <- function(filePattern)
     return(latestFile)
 }
 
-reviewersLatestFile <- getLatestFile("reviewers2016.*.csv")
+reviewersLatestFile <- getLatestFile("reviewers.*.csv")
 reviewers <- read.csv(
   file= reviewersLatestFile,
   head=TRUE,sep=",", dec=".", stringsAsFactors=FALSE)
 #View(reviewers)
 #stop()
 
-componentIssueLatestFile <- getLatestFile("ComponentIssues2016.*.csv")
+componentIssueLatestFile <- getLatestFile("ComponentIssues.*.csv")
 componentIssue <- read.csv(
   file= componentIssueLatestFile,
   head=TRUE,sep=",", dec=".", stringsAsFactors=FALSE)
@@ -52,7 +52,7 @@ componentIssue <- read.csv(
 #files <- list.files(path = "./data/", pattern = "VelocityIssues2016.*.csv")
 #files <- sort(files, decreasing = TRUE)
 #latestFile <- paste("./data/", files[1], sep = "")
-latestFile <- getLatestFile("VelocityIssues2016.*.csv")
+latestFile <- getLatestFile("VelocityIssues.*.csv")
 
 #stop()
 
