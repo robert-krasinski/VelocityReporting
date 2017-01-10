@@ -186,10 +186,10 @@ sprints[sprints$id == 344 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.P
 #sprints[sprints$id == 340 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2016-12-14 10:00')
 #sprints[sprints$id == 350 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2016-12-15 10:00')
 #sprints[sprints$id == 350 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-1-4 10:00')
-sprints[sprints$id == 351 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2017-1-12 10:00')
-sprints[sprints$id == 351 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-1-25 10:00')
-sprints[sprints$id == 356 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2017-1-26 10:00')
-sprints[sprints$id == 356 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-2-8 10:00')
+sprints[sprints$id == 351 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2016-12-15 10:00')
+sprints[sprints$id == 351 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-1-11 10:00')
+sprints[sprints$id == 356 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2017-1-12 10:00')
+sprints[sprints$id == 356 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-1-25 10:00')
 
 
 #View(sprints)
