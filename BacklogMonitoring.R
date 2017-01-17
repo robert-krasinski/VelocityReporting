@@ -263,5 +263,36 @@ for (currentProject in projects) {
 # 
 #stop()
 
+
+backlogIssues$backlogStatus <- ifelse(backlogIssues$status %in% c('Idea', 'Refinement', 'Tech Refinement', 'Estimation'), 'Refinement', 
+                                      ifelse(backlogIssues$status == 'Backlog', 'Ready', 'In Progress'))
+#View(backlogIssues)
+#stop()
+
+backlogIssuesAggrStatus <- aggregate( x=cbind(backlogIssues$count), 
+                                by=list(backlogIssues$project, 
+                                        backlogIssues$backlogStatus),  
+                                FUN = sum)
+colnames(backlogIssuesAggrStatus )[1] <- "project"
+colnames(backlogIssuesAggrStatus )[2] <- "backlogStatus"
+#colnames(backlogIssuesAggr )[3] <- "type"
+colnames(backlogIssuesAggrStatus )[3] <- "count"
+
+backlogIssuesAggrStatus$backlogStatusLabel <- paste(backlogIssuesAggrStatus$backlogStatus, ":" ,
+                                                    backlogIssuesAggrStatus$count)
+
+#View(backlogIssuesAggrStatus)
+#stop()
+
+for (currentProject in projects) {
+  backlogIssuesAggrStatusPerProject <- backlogIssuesAggrStatus[backlogIssuesAggrStatus$project == currentProject,]
+  plot <- pie(backlogIssuesAggrStatusPerProject$count, 
+              labels = backlogIssuesAggrStatusPerProject$backlogStatusLabel, 
+              #col = c("orange", "blue",),
+              main=paste("Issues in backlog for project:", currentProject, "in version 1.0"))
+  print(plot)
+}
+
+
 write.xlsx(backlogIssues, sheetName = "issues", append = FALSE,
            "./data/backlog.xlsx") 
