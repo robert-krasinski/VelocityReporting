@@ -175,7 +175,7 @@ createBacklogNodes3 <- function()
   backlog$pathString <- gsub("NA", "", backlog$pathString)
   
   
-  #backlog <- backlog[backlog$fixVersion.vxt == '1.0 - ITH Live 0.20 ',]
+  backlog <- backlog[backlog$fixVersion.vxt == '1.0 - ITH Live 0.21 ',]
   #View(backlog)
   #stop()
   
@@ -222,7 +222,9 @@ plot(backlogTree)
 #warnings()
 #stop()
 
-backlogIssues <- issues[issues$status == 'Backlog',]
+backlogIssues <- issues[!issues$status %in% c('Completed', 'Awaiting Review', 'Rejected'),]
+backlogIssues <- backlogIssues[backlogIssues$type != 'Sub-task',]
+backlogIssues <- backlogIssues[backlogIssues$fixVersion == '1.0 - ITH Live',]
 backlogIssues <- merge(backlogIssues, linkedVXT, by.x = 'key', by.y = 'key', 
                        all.x = TRUE, suffixes = c('.backlog', '.vxt'))
 
@@ -235,6 +237,7 @@ backlogIssuesAggr <- aggregate( x=cbind(backlogIssues$count),
                                  FUN = sum)
 colnames(backlogIssuesAggr )[1] <- "project"
 colnames(backlogIssuesAggr )[2] <- "isLinked"
+#colnames(backlogIssuesAggr )[3] <- "type"
 colnames(backlogIssuesAggr )[3] <- "count"
 
 backlogIssuesAggr$isLinked <- paste(backlogIssuesAggr$isLinked, ":" ,
@@ -248,7 +251,7 @@ for (currentProject in projects) {
   plot <- pie(backlogIssuesAggrPerProject$count, 
               labels = backlogIssuesAggrPerProject$isLinked, 
               col = c("green", "red"),
-              main=paste("Issues in backlog for project: ", currentProject))
+              main=paste("Issues in backlog for project:", currentProject, "in version 1.0"))
   print(plot)
 }
 
@@ -259,3 +262,6 @@ for (currentProject in projects) {
 # 
 # 
 #stop()
+
+write.xlsx(backlogIssues, sheetName = "issues", append = FALSE,
+           "./data/backlog.xlsx") 
