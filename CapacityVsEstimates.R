@@ -143,8 +143,8 @@ sprints <- subset(sprints, select=-c(self))
 #sprints[sprints$id == 325 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-1-18 10:00')
 #sprints[sprints$id == 408 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2017-1-18 10:00')
 #sprints[sprints$id == 408 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-1-31 10:00')
-sprints[sprints$id == 325 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2017-1-18 10:00')
-sprints[sprints$id == 325 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-1-31 10:00')
+#sprints[sprints$id == 325 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2017-1-18 10:00')
+#sprints[sprints$id == 325 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-1-31 10:00')
 #View(sprints)
 #stop()
 #vbs
@@ -168,6 +168,8 @@ sprints[sprints$id == 325 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.P
 #sprints[sprints$id == 332 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-1-30 10:00')
 sprints[sprints$id == 344 & is.na(sprints$sprintEndDate),]$sprintStartDate <- as.POSIXct('2017-1-31 10:00')
 sprints[sprints$id == 344 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-2-13 10:00')
+sprints[sprints$id == 345 & is.na(sprints$sprintEndDate),]$sprintStartDate <- as.POSIXct('2017-2-14 10:00')
+sprints[sprints$id == 345 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-2-27 10:00')
 
 
 #VIN
@@ -190,6 +192,8 @@ sprints[sprints$id == 351,]$sprintStartDate <- as.POSIXct('2016-12-15 10:00')
 #sprints[sprints$id == 351 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-1-25 10:00')
 sprints[sprints$id == 356 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2017-1-26 10:00')
 sprints[sprints$id == 356 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-2-8 10:00')
+sprints[sprints$id == 458 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2017-2-9 10:00')
+sprints[sprints$id == 458 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-2-22 10:00')
 
 
 #View(sprints)
@@ -413,8 +417,7 @@ sprintsAggregated$CapacityToEstimationRatio <- ifelse(sprintsAggregated$state ==
 sprintsAggregated$CapacityToEstimationRatioMaxLast3 <- NA
 sprintsAggregated$CapacityToEstimationRatioMeanLast3 <- NA
 sprintsAggregated$predictedCapacityToEstimationRatio <- NA
-#View(sprintsAggregated)
-#stop()
+
 
 
 projects <- c('VEL', 'VBS', 'VIN')
@@ -426,24 +429,33 @@ for (currentProject in projects) {
   
   sprintsPerProject <- sprintsAggregated[sprintsAggregated$project == currentProject,]
   #sprintsPerProject <- sprintsPerProject[complete.cases(sprintsPerProject),]
-  #View(sprintsPerProject)
-  #warnistop()
   
+  #warnistop()
+  sprintsPerProject$CapacityToEstimationRatioMeanLast3 <- rollapplyr(
+    sprintsPerProject$CapacityToEstimationRatio,list(-(3:1)),mean,fill=NA)
   sprintsPerProject$CapacityToEstimationRatioMeanLast3 <- ifelse(sprintsPerProject$state == 'closed',
-                                                                 rollmean(sprintsPerProject$CapacityToEstimationRatio, 
-                                                                          k = 3, fill = NA, align = "right"),
+                                                                 sprintsPerProject$CapacityToEstimationRatioMeanLast3,
                                                                  NA)
+   
+  sprintsPerProject$CapacityToEstimationRatioMaxLast3 <- rollapplyr(
+    sprintsPerProject$CapacityToEstimationRatio,list(-(3:1)),max,fill=NA)
+  
+  sprintsPerProject$CapacityToEstimationRatioMedianLast3 <- rollapplyr(
+    sprintsPerProject$CapacityToEstimationRatio,list(-(3:1)),median,fill=NA)
   
   sprintsPerProject$CapacityToEstimationRatioMaxLast3 <- ifelse(sprintsPerProject$state == 'closed',
-                                                                rollmax(sprintsPerProject$CapacityToEstimationRatio, 
-                                                                        k = 3, fill = NA, align = "right"),
+                                                                sprintsPerProject$CapacityToEstimationRatioMaxLast3,
                                                                 NA)
+  #View(sprintsPerProject)
+  #stop()
   lastMeanRatio <- tail(na.omit(sprintsPerProject$CapacityToEstimationRatioMeanLast3), 1)
+  lastMaxRatio <- tail(na.omit(sprintsPerProject$CapacityToEstimationRatioMaxLast3), 1)
   
   sprintsPerProject$predictedCapacityToEstimationRatio <- ifelse(sprintsPerProject$state %in% c('active',
                                                                                                 'future'), 
                                                                  lastMeanRatio, 
-                                                                 sprintsPerProject$CapacityToEstimationRatioMaxLast3)
+                                                                 sprintsPerProject$CapacityToEstimationRatioMeanLast3)
+  
   
   #View(sprintsPerProject)
   #stop()
@@ -451,6 +463,7 @@ for (currentProject in projects) {
   else tempAggr <- rbind(tempAggr, sprintsPerProject)
   
 }
+
 sprintsAggregated <- tempAggr
 #View(tempAggr)
 #stop()
@@ -461,25 +474,64 @@ sprintsAggregated$predictedEstimationSum <- NA
 
 #sprintsAggregated$predictedEstimationSum <- ifelse(sprintsAggregated$state == 'active', sprintsAggregated$originalEstimationSum, 
 #                                                   sprintsAggregated$predictedEstimationSum)
+sprintsAggregated$estimationSum <- ifelse(sprintsAggregated$state %in% c('active', 'future'), 
+                                          sprintsAggregated$originalEstimationSum,
+                                          NA)
 
 sprintsAggregated$predictedEstimationSum <- ifelse(sprintsAggregated$state %in% c('active', 'future', 'closed'), 
                                                    sprintsAggregated$sprintCapacity / sprintsAggregated$predictedCapacityToEstimationRatio,
                                                    sprintsAggregated$predictedEstimationSum)
 
-sprintsAggregated$estimationSum <- ifelse(sprintsAggregated$state %in% c('active', 'future'), 
-                                                   sprintsAggregated$originalEstimationSum,
-                                                   NA)
+sprintsAggregated$predictedSumMaxModel <- ifelse(sprintsAggregated$state %in% c('active', 'future', 'closed'), 
+                                                   sprintsAggregated$sprintCapacity / sprintsAggregated$CapacityToEstimationRatioMaxLast3,
+                                                   sprintsAggregated$predictedEstimationSum)
+
+
+sprintsAggregated$predictedSumMeanModel <- ifelse(sprintsAggregated$state %in% c('active', 'future', 'closed'), 
+                                                   sprintsAggregated$sprintCapacity / sprintsAggregated$CapacityToEstimationRatioMeanLast3,
+                                                   sprintsAggregated$predictedEstimationSum)
+
+sprintsAggregated$predictedSumMedianModel <- ifelse(sprintsAggregated$state %in% c('active', 'future', 'closed'), 
+                                                  sprintsAggregated$sprintCapacity / sprintsAggregated$CapacityToEstimationRatioMedianLast3,
+                                                  sprintsAggregated$predictedEstimationSum)
 
 
 sprintsAggregated$remainingEstimationSum <- ifelse(sprintsAggregated$state %in% c('active', 'future'), 
                                           sprintsAggregated$remainingEstimation,
                                           NA)
-#View(sprintsAggregated)
-#stop()
+
 
 sprintsAggregated$estimatedAvailCapacity <- ifelse(sprintsAggregated$state %in% c('active', 'future'), 
                                                    sprintsAggregated$predictedEstimationSum - sprintsAggregated$remainingEstimationSum,
                                                    NA)
+
+
+#calculate estimation model error
+#maxModel - ratio = max from last 3
+#meanModel - ratio = mean from last 3
+
+sprintsAggregated$maxModelError <- round(sprintsAggregated$deliveredEstimationSum - 
+                                                sprintsAggregated$predictedSumMaxModel, digits = 2)
+
+sprintsAggregated$meanModelError <- round(sprintsAggregated$deliveredEstimationSum - 
+                                           sprintsAggregated$predictedSumMeanModel, digits = 2)
+
+sprintsAggregated$medianModelError <- round(sprintsAggregated$deliveredEstimationSum - 
+                                            sprintsAggregated$predictedSumMedianModel, digits = 2)
+
+
+sprintsAggregatedClosedSprints <- sprintsAggregated[!is.na(sprintsAggregated$maxModelError), ]
+estimationModelError <- aggregate( x=cbind(sprintsAggregatedClosedSprints$maxModelError,
+                                           sprintsAggregatedClosedSprints$meanModelError,
+                                           sprintsAggregatedClosedSprints$medianModelError), by=list(sprintsAggregatedClosedSprints$project),
+                               FUN = sum)
+colnames(estimationModelError )[1] <- "project"
+colnames(estimationModelError )[2] <- "maxModelError" 
+colnames(estimationModelError )[3] <- "meanModelError"
+colnames(estimationModelError )[3] <- "medianModelError" 
+#View(estimationModelError)
+#stop()
+
 
 for (currentProject in projects) {
   sprintsPerProject <- sprintsAggregated[sprintsAggregated$project == currentProject,]
@@ -487,8 +539,6 @@ for (currentProject in projects) {
   #sprintsPerProject <- sprintsPerProject[complete.cases(sprintsPerProject),]
   
   
-  #View(sprintsPerProject)
-  #stop()
   
   plot <- ggplot(sprintsPerProject, aes(sprintsPerProject$sprintEndDate)) + 
     #geom_point(aes(y=sprintsPerProject$originalEstimationSum)) +
@@ -501,6 +551,7 @@ for (currentProject in projects) {
     geom_line(aes(y=sprintsPerProject$predictedEstimationSum, colour ="estimated delivery\n(capacity / ratio)")) + 
     geom_point(aes(y=sprintsPerProject$estimationSum)) +
     geom_line(aes(y=sprintsPerProject$estimationSum, colour ="planned estimations (Jira)")) + 
+    geom_line(aes(y=sprintsPerProject$predictedSumMedianModel, colour ="median model")) + 
     xlab("sprint end date")+
     ylab("sum of original estimations [d]") +
     ggtitle(paste("Stories delivered during sprint in project", currentProject, sep = " ")) +
@@ -509,25 +560,31 @@ for (currentProject in projects) {
   
   print(plot)
   
-  plot <- ggplot(sprintsPerProject, aes(sprintsPerProject$sprintEndDate)) + 
-    #geom_point(aes(y=sprintsPerProject$originalEstimationSum)) +
-    #geom_line(aes(y=sprintsPerProject$originalEstimationSum, colour ="original estimates")) +  # first layer
-    geom_point(aes(y=sprintsPerProject$CapacityToEstimationRatio)) +
-    geom_line(aes(y=sprintsPerProject$CapacityToEstimationRatio, colour ="Capacity / Delivered Estimations")) +  # first layer
-    geom_point(aes(y=sprintsPerProject$CapacityToEstimationRatioMeanLast3)) +
-    geom_line(aes(y=sprintsPerProject$CapacityToEstimationRatioMeanLast3, colour ="Capacity / Delivered Estimations\nmean last 3")) +  # first layer
-    geom_point(aes(y=sprintsPerProject$CapacityToEstimationRatioMaxLast3)) +
-    geom_line(aes(y=sprintsPerProject$CapacityToEstimationRatioMaxLast3, colour ="Capacity / Delivered Estimations\nmax last 3 (pesimistic)")) +  # first layer
-    geom_point(aes(y=sprintsPerProject$predictedCapacityToEstimationRatio)) +
-    geom_line(aes(y=sprintsPerProject$predictedCapacityToEstimationRatio, colour ="Predicted ratio (mean)")) +  
-    
-    #geom_point(aes(y=sprintsPerProject$CapacityToEstimationRatioMinLast3)) +
-    #geom_line(aes(y=sprintsPerProject$CapacityToEstimationRatioMinLast3, colour ="Capacity / Delivered Estimations\nmin last 3 (optimistic)")) +  # first layer
-    xlab("sprint end date")+
-    ylab("Ratio") +
-    ggtitle(paste("Team capacity / Delivered estimations", currentProject, sep = " ")) +
-    
-    labs(fill = "")
+  # if(currentProject == 'VBS')
+  # {
+  #   View(sprintsPerProject)
+  #   stop()
+  # }
+  
+  # plot <- ggplot(sprintsPerProject, aes(sprintsPerProject$sprintEndDate)) + 
+  #   #geom_point(aes(y=sprintsPerProject$originalEstimationSum)) +
+  #   #geom_line(aes(y=sprintsPerProject$originalEstimationSum, colour ="original estimates")) +  # first layer
+  #   geom_point(aes(y=sprintsPerProject$CapacityToEstimationRatio)) +
+  #   geom_line(aes(y=sprintsPerProject$CapacityToEstimationRatio, colour ="Capacity / Delivered Estimations")) +  # first layer
+  #   geom_point(aes(y=sprintsPerProject$CapacityToEstimationRatioMeanLast3)) +
+  #   geom_line(aes(y=sprintsPerProject$CapacityToEstimationRatioMeanLast3, colour ="Capacity / Delivered Estimations\nmean last 3")) +  # first layer
+  #   geom_point(aes(y=sprintsPerProject$CapacityToEstimationRatioMaxLast3)) +
+  #   geom_line(aes(y=sprintsPerProject$CapacityToEstimationRatioMaxLast3, colour ="Capacity / Delivered Estimations\nmax last 3 (pesimistic)")) +  # first layer
+  #   geom_point(aes(y=sprintsPerProject$predictedCapacityToEstimationRatio)) +
+  #   geom_line(aes(y=sprintsPerProject$predictedCapacityToEstimationRatio, colour ="Predicted ratio (mean)")) +  
+  #   
+  #   #geom_point(aes(y=sprintsPerProject$CapacityToEstimationRatioMinLast3)) +
+  #   #geom_line(aes(y=sprintsPerProject$CapacityToEstimationRatioMinLast3, colour ="Capacity / Delivered Estimations\nmin last 3 (optimistic)")) +  # first layer
+  #   xlab("sprint end date")+
+  #   ylab("Ratio") +
+  #   ggtitle(paste("Team capacity / Delivered estimations", currentProject, sep = " ")) +
+  #   
+  #   labs(fill = "")
   
   #print(plot)
 }
@@ -681,6 +738,8 @@ for (currentProject in projects) {
     
   print(plot)
 }
+
+
 
 
 write.xlsx(sprintsAggregated, sheetName = "data", append = FALSE,
