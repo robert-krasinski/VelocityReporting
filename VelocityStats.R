@@ -771,7 +771,7 @@ colnames(estimatedFinishedIssuesAggrPerc )[3] <- "meanEstimationDifferencePerc"
  finishedIssuesMovedBackVBS <- finishedIssuesMovedBack[finishedIssuesMovedBack$project == 'VBS',]
  finishedIssuesMovedBackVBS <- finishedIssuesMovedBackVBS[order(finishedIssuesMovedBackVBS$EndWeek), ]
  finishedIssuesMovedBackVBS$returnsSum <- finishedIssuesMovedBackVBS$codeReviewToDev + finishedIssuesMovedBackVBS$testsToDev
- finishedIssuesMovedBackVBS <- finishedIssuesMovedBackVBS[finishedIssuesMovedBackVBS$returnsSum >= 4,]
+ finishedIssuesMovedBackVBS <- finishedIssuesMovedBackVBS[finishedIssuesMovedBackVBS$returnsSum >= 0,]
  
  finishedIssuesMovedBackVBS <- subset(finishedIssuesMovedBackVBS, select = c(key, summary, EndWeek, codeReviewToDev,
                                                                              testsToDev, returnsSum, devOwner))
