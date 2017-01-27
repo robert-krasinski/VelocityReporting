@@ -170,7 +170,8 @@ sprints[sprints$id == 344 & is.na(sprints$sprintEndDate),]$sprintStartDate <- as
 sprints[sprints$id == 344 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-2-13 10:00')
 sprints[sprints$id == 345 & is.na(sprints$sprintEndDate),]$sprintStartDate <- as.POSIXct('2017-2-14 10:00')
 sprints[sprints$id == 345 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-2-27 10:00')
-
+#sprint 22 (closed incidentally) removed because it was overwritten by 22(reopened)
+sprints <- sprints[sprints$id != 332,]
 
 #VIN
 #sprints[sprints$id == 275 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2016-09-08 10:00')
@@ -190,8 +191,8 @@ sprints[sprints$id == 345 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.P
 #sprints[sprints$id == 350 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-1-4 10:00')
 sprints[sprints$id == 351,]$sprintStartDate <- as.POSIXct('2016-12-15 10:00')
 #sprints[sprints$id == 351 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-1-25 10:00')
-sprints[sprints$id == 356 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2017-1-26 10:00')
-sprints[sprints$id == 356 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-2-8 10:00')
+#sprints[sprints$id == 356 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2017-1-26 10:00')
+#sprints[sprints$id == 356 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-2-8 10:00')
 sprints[sprints$id == 458 & is.na(sprints$sprintStartDate),]$sprintStartDate <- as.POSIXct('2017-2-9 10:00')
 sprints[sprints$id == 458 & is.na(sprints$sprintEndDate),]$sprintEndDate <- as.POSIXct('2017-2-22 10:00')
 
@@ -526,9 +527,13 @@ estimationModelError <- aggregate( x=cbind(sprintsAggregatedClosedSprints$maxMod
                                            sprintsAggregatedClosedSprints$medianModelError), by=list(sprintsAggregatedClosedSprints$project),
                                FUN = sum)
 colnames(estimationModelError )[1] <- "project"
-colnames(estimationModelError )[2] <- "maxModelError" 
-colnames(estimationModelError )[3] <- "meanModelError"
-colnames(estimationModelError )[3] <- "medianModelError" 
+colnames(estimationModelError )[2] <- "cumMaxModelError" 
+colnames(estimationModelError )[3] <- "cumMeanModelError"
+colnames(estimationModelError )[4] <- "cumMedianModelError" 
+
+#meanErrors <- sprintsAggregated[sprintsAggregated$project == 'VBS',]$meanModelError
+#summary(meanErrors)
+
 #View(estimationModelError)
 #stop()
 
