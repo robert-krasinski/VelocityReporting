@@ -539,9 +539,9 @@ sprintsAggregated$predictedSumMeanModel <- ifelse(sprintsAggregated$state %in% c
                                                    sprintsAggregated$predictedEstimationSum)
 
 sprintsAggregated$predictedSumMeanModelAddSd <-  sprintsAggregated$sprintCapacity / 
-                                                    (sprintsAggregated$CapacityToEstimationRatioMeanLast3 + sprintsAggregated$CapacityToEstimationRatioSDLast3)
+                                                    (sprintsAggregated$CapacityToEstimationRatioMeanLast3 + 2 * sprintsAggregated$CapacityToEstimationRatioSDLast3)
 sprintsAggregated$predictedSumMeanModelSubSd <-  sprintsAggregated$sprintCapacity / 
-  (sprintsAggregated$CapacityToEstimationRatioMeanLast3 - sprintsAggregated$CapacityToEstimationRatioSDLast3)
+  (sprintsAggregated$CapacityToEstimationRatioMeanLast3 - 2 * sprintsAggregated$CapacityToEstimationRatioSDLast3)
 
 sprintsAggregated$predictedSumMedianModel <- ifelse(sprintsAggregated$state %in% c('active', 'future', 'closed'), 
                                                   sprintsAggregated$sprintCapacity / sprintsAggregated$CapacityToEstimationRatioMedianLast3,
@@ -704,6 +704,7 @@ for (currentProject in projects)
   #stop()
   
   sprintsPerProject <- sprintsAggregated[sprintsAggregated$project == currentProject,]
+  hist(sprintsPerProject$meanModelError, main = paste("Histogram of mean model error for project" , currentProject))
   lastMeanRatio <- tail(na.omit(sprintsPerProject$CapacityToEstimationRatioMeanLast3), 1)
   lastMeanRatioSd <- tail(na.omit(sprintsPerProject$CapacityToEstimationRatioSDLast3), 1)
   tmpDays$CapacityToEstimationRationMeanLast3 <- lastMeanRatio
@@ -814,8 +815,8 @@ for (currentProject in projects) {
     #geom_line(aes(y=sprintsPerProject$originalEstimationSum, colour ="original estimates")) +  # first layer
     #geom_point(aes(y=burndownPerProject$backlogLeft)) +
     geom_line(aes(y=burndownPerProject$backlogLeft, colour = "realistic (mean ratio last 3 sprints)")) + 
-    geom_line(aes(y=burndownPerProject$backlogLeftSubSd, colour = "optimistic (mean ratio - sd)")) +  
-    geom_line(aes(y=burndownPerProject$backlogLeftAddSd, colour = "pesimistic (mean ratio + sd)")) +  
+    geom_line(aes(y=burndownPerProject$backlogLeftSubSd, colour = "optimistic (mean ratio - 2 * sd)")) +  
+    geom_line(aes(y=burndownPerProject$backlogLeftAddSd, colour = "pesimistic (mean ratio + 2 * sd)")) +  
     
     #geom_point(aes(y=sprintsPerProject$sprintCapacity)) +
     #geom_line(aes(y=sprintsPerProject$sprintCapacity, colour ="team capacity")) + 
