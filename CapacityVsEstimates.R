@@ -539,9 +539,9 @@ sprintsAggregated$predictedSumMeanModel <- ifelse(sprintsAggregated$state %in% c
                                                    sprintsAggregated$predictedEstimationSum)
 
 sprintsAggregated$predictedSumMeanModelAddSd <-  sprintsAggregated$sprintCapacity / 
-                                                    (sprintsAggregated$CapacityToEstimationRatioMeanLast3 + 2 * sprintsAggregated$CapacityToEstimationRatioSDLast3)
+                                                    (sprintsAggregated$CapacityToEstimationRatioMeanLast3 + sprintsAggregated$CapacityToEstimationRatioSDLast3)
 sprintsAggregated$predictedSumMeanModelSubSd <-  sprintsAggregated$sprintCapacity / 
-  (sprintsAggregated$CapacityToEstimationRatioMeanLast3 - 2 * sprintsAggregated$CapacityToEstimationRatioSDLast3)
+  (sprintsAggregated$CapacityToEstimationRatioMeanLast3 - sprintsAggregated$CapacityToEstimationRatioSDLast3)
 
 sprintsAggregated$predictedSumMedianModel <- ifelse(sprintsAggregated$state %in% c('active', 'future', 'closed'), 
                                                   sprintsAggregated$sprintCapacity / sprintsAggregated$CapacityToEstimationRatioMedianLast3,
@@ -603,6 +603,7 @@ estimationModelError <- merge(estimationModelError, estimationModelErrorSD, by="
 
 for (currentProject in projects) {
   sprintsPerProject <- sprintsAggregated[sprintsAggregated$project == currentProject,]
+
   
   #sprintsPerProject <- sprintsPerProject[complete.cases(sprintsPerProject),]
   
@@ -627,10 +628,13 @@ for (currentProject in projects) {
     ggtitle(paste("Stories delivered during sprint in project", currentProject, sep = " ")) +
     scale_fill_manual( values = c25 ) +    
     labs(fill = "") +
-    scale_x_datetime(date_breaks = "1 month", date_labels = "%b")
+    scale_x_datetime(date_breaks = "1 month", date_labels = "%b") +
+    ylim(c(0,100))
   
   print(plot)
   
+  #View(sprintsPerProject)
+  #stop()
   # if(currentProject == 'VBS')
   # {
   #   View(sprintsPerProject)
@@ -733,9 +737,9 @@ return(capacity)
 
 burndown$predictedCapacity <- burndown$capacity / burndown$CapacityToEstimationRationMeanLast3
 burndown$predictedCapacityAddSd <- burndown$capacity / 
-  (burndown$CapacityToEstimationRationMeanLast3 + burndown$CapacityToEstimationRatioSdLast3)
+  (burndown$CapacityToEstimationRationMeanLast3 + 2 * burndown$CapacityToEstimationRatioSdLast3)
 burndown$predictedCapacitySubSd <- burndown$capacity / 
-  (burndown$CapacityToEstimationRationMeanLast3 - burndown$CapacityToEstimationRatioSdLast3)
+  (burndown$CapacityToEstimationRationMeanLast3 - 2 * burndown$CapacityToEstimationRatioSdLast3)
 
 #View(burndown)
 #stop()
