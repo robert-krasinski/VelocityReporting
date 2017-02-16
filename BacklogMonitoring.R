@@ -174,8 +174,10 @@ createBacklogNodes3 <- function()
                               sep = "/")
   backlog$pathString <- gsub("NA", "", backlog$pathString)
   
+  write.xlsx(backlog, sheetName = "data", append = FALSE,
+             "./data/backlogTree.xlsx") 
   
-  backlog <- backlog[backlog$fixVersion.vxt == '1.0 - ITH Live 0.21 ',]
+  backlog <- backlog[backlog$fixVersion.vxt == '1.0 - ITH Live 0.22 ',]
   #View(backlog)
   #stop()
   
@@ -224,7 +226,7 @@ plot(backlogTree)
 
 backlogIssues <- issues[!issues$status %in% c('Completed', 'Awaiting Review', 'Rejected'),]
 backlogIssues <- backlogIssues[backlogIssues$type != 'Sub-task',]
-backlogIssues <- backlogIssues[backlogIssues$fixVersion == '1.0 - ITH Live',]
+#backlogIssues <- backlogIssues[backlogIssues$fixVersion == '1.0 - ITH Live',]
 backlogIssues <- merge(backlogIssues, linkedVXT, by.x = 'key', by.y = 'key', 
                        all.x = TRUE, suffixes = c('.backlog', '.vxt'))
 
@@ -251,7 +253,7 @@ for (currentProject in projects) {
   plot <- pie(backlogIssuesAggrPerProject$count, 
               labels = backlogIssuesAggrPerProject$isLinked, 
               col = c("green", "red"),
-              main=paste("Issues in backlog for project:", currentProject, "in version 1.0"))
+              main=paste("Issues in backlog for project:", currentProject, "in all versions."))
   print(plot)
 }
 
@@ -264,8 +266,10 @@ for (currentProject in projects) {
 #stop()
 
 
-backlogIssues$backlogStatus <- ifelse(backlogIssues$status %in% c('Idea', 'Refinement', 'Tech Refinement', 'Estimation'), 'Refinement', 
-                                      ifelse(backlogIssues$status == 'Backlog', 'Ready', 'In Progress'))
+backlogIssues$backlogStatus <- ifelse(backlogIssues$status == 'Idea', "Idea", 
+                                      ifelse(backlogIssues$status %in% c('Refinement', 'Tech Refinement', 'Estimation'), 'Refinement', 
+                                             ifelse(backlogIssues$status == 'Backlog', 'Ready', 'In Progress')))
+  
 #View(backlogIssues)
 #stop()
 
@@ -289,7 +293,7 @@ for (currentProject in projects) {
   plot <- pie(backlogIssuesAggrStatusPerProject$count, 
               labels = backlogIssuesAggrStatusPerProject$backlogStatusLabel, 
               #col = c("orange", "blue",),
-              main=paste("Issues in backlog for project:", currentProject, "in version 1.0"))
+              main=paste("Issues in backlog for project:", currentProject, "in all versions"))
   print(plot)
 }
 
