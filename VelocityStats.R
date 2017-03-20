@@ -449,7 +449,8 @@ for(currentProject in projects){
     ggtitle("Issues reported by source weekly") + scale_fill_manual( values = c25 ) +
     ylab("Number of issues") +
     xlab("month") + ggtitle(paste("Completed issues monthly in project", currentProject, sep = " ")) +
-    labs(fill = "Type")
+    labs(fill = "Type")# +
+    #scale_x_datetime(date_breaks = "1 month", date_labels = "%b")
 
   print(plot)
   #View(completedIssuesAggrSumMonthProject)
