@@ -13,6 +13,7 @@ import json
 import optparse
 import sys
 import time
+from joblib import Parallel, delayed
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -192,7 +193,7 @@ def GetWorkTimeInStatus(previousTransferDate, transferDate):
 
 
 def isMajorVersion(version):
-    if re.search('1\.0 - ITH Live', version['name']) == None:
+    if re.search('UK', version['name']) == None:
         return False
     else:
         return True
@@ -524,6 +525,8 @@ def GetVXTAndRelated():
 
     relatedIssuesList2ndLevel = [x for x in relatedIssuesList2ndLevel if x.linkedKey.find("VXT") == -1]
     relatedIssuesList2ndLevel = [x for x in relatedIssuesList2ndLevel if x.linkedKey.find("VMCM") == -1]
+    relatedIssuesList2ndLevel = [x for x in relatedIssuesList2ndLevel if x.linkedKey.find("GLOUC") == -1]
+    relatedIssuesList2ndLevel = [x for x in relatedIssuesList2ndLevel if x.linkedKey.find("II") == -1]
     searchUrl = CreateUrlForRelatedIssues(relatedIssuesList2ndLevel)
     relatedIssuesList3rdLevel, issueList3rdLevel = GetVXTAndRelatedLists(searchUrl)
     issueList += issueList3rdLevel
@@ -572,92 +575,96 @@ def CreateUrlForRelatedIssues(relatedIssuesList):
 
 def GetVXTAndRelatedLists(searchUrl):
     # global startAt, issueComponents, component, sprint, issue, issuesFilename, f, w, row
-    startAt = 0
-    maxResults = 50
-    issueList = list()
-    relatedIssues = list()
-    while True:
-        url = options.jira_url + searchUrl + str(
-            startAt)
-
-        print url
-        response = jsonFetcher.getJSON(url)
-
-        for jsonIssue in response['issues']:
-
-            key = jsonIssue['key']
-            issueId = jsonIssue['id']
-            print key
-            fields = jsonIssue['fields']
-
-            # fixVersionName = getMajorVersion(fields['fixVersions'])
-            fixVersionName = getConcatenatedVersions(fields['fixVersions'])
-            minorVersion = getMinorVersion(fields['fixVersions'])
-            # fixVersionName = fix_version['name'] if (fix_version) else None
 
 
-            for linkedIssue in fields[u'issuelinks']:
-                if 'inwardIssue' in linkedIssue:
-                    issueKey = linkedIssue[u'inwardIssue'][u'key']
-                else:
-                    issueKey = linkedIssue[u'outwardIssue'][u'key']
+        startAt = 0
+        maxResults = 50
+        issueList = list()
+        relatedIssues = list()
 
-                epicIssue = IssueLink(
-                    key=key,
-                    linkedKey=issueKey
-                )
-                relatedIssues.append(epicIssue)
 
-            # for history in issue['histories']:
-            priority = fields['priority']
-            issueType = fields['issuetype']['name']
+        while True:
+            url = options.jira_url + searchUrl + str(
+                startAt)
 
-            if issueType == 'Epic' :
-                epicStoriesUrl = "/rest/api/2/search?jql=('Epic+Link'+in+%28" + key + "%29)&startAt="
-                epicRelatedIssues, epicChildrenList = GetVXTAndRelatedLists(epicStoriesUrl)
-                issueList += epicChildrenList
-                for epicChild in epicChildrenList:
+            print url
+            response = jsonFetcher.getJSON(url)
+
+            for jsonIssue in response['issues']:
+
+                key = jsonIssue['key']
+                issueId = jsonIssue['id']
+                print key
+                fields = jsonIssue['fields']
+
+                # fixVersionName = getMajorVersion(fields['fixVersions'])
+                fixVersionName = getConcatenatedVersions(fields['fixVersions'])
+                minorVersion = getMinorVersion(fields['fixVersions'])
+                # fixVersionName = fix_version['name'] if (fix_version) else None
+
+
+                for linkedIssue in fields[u'issuelinks']:
+                    if 'inwardIssue' in linkedIssue:
+                        issueKey = linkedIssue[u'inwardIssue'][u'key']
+                    else:
+                        issueKey = linkedIssue[u'outwardIssue'][u'key']
+
                     epicIssue = IssueLink(
                         key=key,
-                        linkedKey=epicChild.key
+                        linkedKey=issueKey
                     )
                     relatedIssues.append(epicIssue)
 
-            issue = Issue(
-                id=issueId,
-                project=fields['project']['key'],
-                key=key,
-                summary=fields['summary'],
-                sprint=None,
-                updated=fields['updated'],
-                component=None,
-                priority=priority['name'] if (priority) else None,
-                severity=None,
-                fixVersion=fixVersionName,
-                minorVersion=minorVersion,
-                type=issueType,
-                created=fields['created'],
-                reporter=fields['reporter']['displayName'],
-                status=fields['status']['name'],
-                devOwner=None,
-                timeToComplete=None,
-                workTimeToComplete=None,
-                movedToComplete=None,
-                aggregatetimeoriginalestimate=fields['aggregatetimeoriginalestimate'],  # in seconds,
-                timeoriginalestimate=fields['aggregatetimeoriginalestimate'],
-                transitions=None,
-                codeReviewToDev=None,
-                testsToDev=None,
-                remainingEstimate=fields['timeestimate']
+                # for history in issue['histories']:
+                priority = fields['priority']
+                issueType = fields['issuetype']['name']
 
-            )
-            issueList.append(issue)
-        # break;
-        # check if all is retrieved
-        startAt = startAt + maxResults;
-        if (startAt >= response['total']):
-            break;
-    return relatedIssues, issueList
+                if issueType == 'Epic' :
+                    epicStoriesUrl = "/rest/api/2/search?jql=('Epic+Link'+in+%28" + key + "%29)&startAt="
+                    epicRelatedIssues, epicChildrenList = GetVXTAndRelatedLists(epicStoriesUrl)
+                    issueList += epicChildrenList
+                    for epicChild in epicChildrenList:
+                        epicIssue = IssueLink(
+                            key=key,
+                            linkedKey=epicChild.key
+                        )
+                        relatedIssues.append(epicIssue)
+
+                issue = Issue(
+                    id=issueId,
+                    project=fields['project']['key'],
+                    key=key,
+                    summary=fields['summary'],
+                    sprint=None,
+                    updated=fields['updated'],
+                    component=None,
+                    priority=priority['name'] if (priority) else None,
+                    severity=None,
+                    fixVersion=fixVersionName,
+                    minorVersion=minorVersion,
+                    type=issueType,
+                    created=fields['created'],
+                    reporter=fields['reporter']['displayName'],
+                    status=fields['status']['name'],
+                    devOwner=None,
+                    timeToComplete=None,
+                    workTimeToComplete=None,
+                    movedToComplete=None,
+                    aggregatetimeoriginalestimate=fields['aggregatetimeoriginalestimate'],  # in seconds,
+                    timeoriginalestimate=fields['aggregatetimeoriginalestimate'],
+                    transitions=None,
+                    codeReviewToDev=None,
+                    testsToDev=None,
+                    remainingEstimate=fields['timeestimate']
+
+                )
+                issueList.append(issue)
+            # break;
+            # check if all is retrieved
+            startAt = startAt + maxResults;
+            if (startAt >= response['total']):
+                break;
+        return relatedIssues, issueList
 
 
 def createOutputFolder():
@@ -671,37 +678,24 @@ def createOutputFolder():
 if __name__ == '__main__':
     (options, args) = parseArgs()
 
-start = time.time()
+    start = time.time()
 
-# print options.user
-# print options.password
+    # print options.user
+    # print options.password
 
-# Basic Auth is usually easier for scripts like this to deal with than Cookies.
-auth = BasicAuth(options.user, options.password)
+    # Basic Auth is usually easier for scripts like this to deal with than Cookies.
+    auth = BasicAuth(options.user, options.password)
 
-jsonFetcher = Fetcher(options.jira_url, auth)
-
-
+    jsonFetcher = Fetcher(options.jira_url, auth)
 
 
-#GetReviewersFromGithub()
+    #GetReviewersFromGithub()
 
-createOutputFolder()
-GetVXTAndRelated()
+    createOutputFolder()
+    GetVXTAndRelated()
+    GetJiraIssues()
+    GetSprintIssuesFromJira()
+    GetComponentsFromJira()
 
-GetSprintIssuesFromJira()
-GetComponentsFromJira()
-
-GetJiraIssues()
-
-
-
-
-
-
-
-
-
-
-end = time.time()
-print(end - start)
+    end = time.time()
+    print(end - start)
