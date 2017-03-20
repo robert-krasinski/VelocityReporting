@@ -95,6 +95,18 @@ vxtIssues <- vxtIssues[order(vxtIssues$fixVersion),]
 #View(relatedIssues)
 #stop()
 
+source('./sprintsLib.R')
+sprints <- loadSprints()
+
+sprintIssueFiles <- list.files(path = "./data/", pattern = "SprintIssue.*.csv")
+sprintIssueFiles <- sort(sprintIssueFiles, decreasing = TRUE)
+
+latestSprintIssueFile <- paste("./data/", sprintIssueFiles[1], sep = "")
+print(latestSprintIssueFile)
+sprintIssues <- read.csv(
+  file= latestSprintIssueFile,
+  head=TRUE,sep=",", dec=".", stringsAsFactors=FALSE)
+
 
 
 createBacklogNodes3 <- function()
@@ -177,19 +189,17 @@ createBacklogNodes3 <- function()
   write.xlsx(backlog, sheetName = "data", append = FALSE,
              "./data/backlogTree.xlsx") 
   
-  backlog <- backlog[backlog$fixVersion.vxt == '1.0 - ITH Live 0.22 ',]
+  backlog <- backlog[backlog$fixVersion.vxt == '1.2 ',]
+  #backlog <- backlog[backlog$fixVersion.vxt %in% c('1.1a ', '1.1b ', '1.1c ', '1.1d ', '1.1e ', '1.1f '),]
   #View(backlog)
   #stop()
+    
   
   #stop()
   backlogTree <- as.Node(backlog)
 }
 
-backlogTree <- createBacklogNodes3()
-print(backlogTree, limit = 200)
 
-
-SetGraphStyle(backlogTree, rankdir = "LR")
 
 GetNodeShape <- function(node){
   if(grepl( c("Epic"), node$name)) return("ellipse")
@@ -217,15 +227,26 @@ GetNodeColor <- function(node){
   
 } 
 
-SetNodeStyle(backlogTree, fontname = 'helvetica', shape = GetNodeShape, color = GetNodeColor)
-plot(backlogTree)
+plotVersionTree <- function(){
+  backlogTree <- createBacklogNodes3()
+  print(backlogTree, limit = 200)
+  
+  SetGraphStyle(backlogTree, rankdir = "LR")
+  
+  SetNodeStyle(backlogTree, fontname = 'helvetica', shape = GetNodeShape, color = GetNodeColor)
+  plot(backlogTree)
+}
 
+plotVersionTree()
 
 #warnings()
 #stop()
 
-backlogIssues <- issues[!issues$status %in% c('Completed', 'Awaiting Review', 'Rejected'),]
+backlogIssues <- issues[!issues$status %in% c('Completed', 'Awaiting Review', 'Rejected', 'Idea', 'Frozen'),]
 backlogIssues <- backlogIssues[backlogIssues$type != 'Sub-task',]
+
+#View(backlogIssues)
+#stop()
 #backlogIssues <- backlogIssues[backlogIssues$fixVersion == '1.0 - ITH Live',]
 backlogIssues <- merge(backlogIssues, linkedVXT, by.x = 'key', by.y = 'key', 
                        all.x = TRUE, suffixes = c('.backlog', '.vxt'))
@@ -298,5 +319,56 @@ for (currentProject in projects) {
 }
 
 
+
+#----------------------------------------------------------------------------------------------------------
+#visualise future sprints completeness
+sprintsWithIssues <- merge(sprintIssues, backlogIssues, by="key", all.x = TRUE)
+sprintsWithIssues <- sprintsWithIssues[sprintsWithIssues$status != 'Rejected',]
+#temp <- sprintsWithIssues[sprintsWithIssues$sprintId == '330',]
+#View(temp)
+#stop()
+sprintsWithIssues <- merge(sprintsWithIssues, sprints, by.x ="sprintId", by.y = "id", all.x = TRUE, all.y = TRUE)
+futureSprintsIssues <- sprintsWithIssues[sprintsWithIssues$state == 'future',]
+
+futureSprintsIssues <- futureSprintsIssues[!is.na(futureSprintsIssues$key),]
+#View(futureSprintsIssues)
+#stop()
+
+ backlogIssuesAgrPerSprint <- aggregate( x=cbind(futureSprintsIssues$count), 
+                                         by=list(futureSprintsIssues$project, futureSprintsIssues$name,
+                                                 futureSprintsIssues$backlogStatus),  
+                                         FUN = sum)
+ 
+ colnames(backlogIssuesAgrPerSprint )[1] <- "project"
+ colnames(backlogIssuesAgrPerSprint )[2] <- "sprintName"
+ #colnames(backlogIssuesAggr )[3] <- "type"
+ colnames(backlogIssuesAgrPerSprint )[3] <- "status"
+ colnames(backlogIssuesAgrPerSprint )[4] <- "count"
+ 
+ 
+ for(currentProject in projects)
+ {
+   backlogIssuesAgrPerSprintCurrProject <- backlogIssuesAgrPerSprint[backlogIssuesAgrPerSprint$project == currentProject,]
+   
+   plot <- ggplot(data = backlogIssuesAgrPerSprintCurrProject, 
+                  aes(x = backlogIssuesAgrPerSprintCurrProject$sprintName,
+                      y = backlogIssuesAgrPerSprintCurrProject$count,
+                      fill = backlogIssuesAgrPerSprintCurrProject$status,
+                      label = backlogIssuesAgrPerSprintCurrProject$count)) +
+     geom_bar(stat="identity") +
+     ggtitle(paste("Future sprints status for project:", currentProject)) + 
+     #scale_fill_manual( values = c("yellow", "orange") ) +
+     ylab("Number of issues") +
+     xlab("Sprint name") +
+     labs(fill  = "Status") +
+     geom_text(size = 3, position = position_stack(vjust = 0.5)) +
+     theme(axis.text.x = element_text(angle = 90, hjust = 1))
+   
+   print(plot)
+ }
+ 
+ #View(backlogIssuesAgrPerSprint)
+ #stop() 
+#----------------------------------------------------------------------------------------------------------
 write.xlsx(backlogIssues, sheetName = "issues", append = FALSE,
            "./data/backlog.xlsx") 
