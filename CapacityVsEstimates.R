@@ -567,10 +567,12 @@ backlog <- issues[issues$status %in% c('QA Refinement', 'Estimation', 'Tech Refi
                                        'In Testing'),]
 #backlog <- issues[issues$key == 'VIN-356',]
 #backlog <- issues[issues$minorVersion %in% c('UK', 'Gloucester'),]
-backlog <- backlog[backlog$fixVersion %in% c('UK'),]
 
+backlog <- backlog[backlog$fixVersion %in% c('1.1'),]
+#backlog <- backlog[backlog$project == 'VEL',]
 #View(backlog)
 #stop()
+
 
 
 backlogAggr <- aggregate( x=cbind(backlog$originalEstimation, backlog$remainingEstimate), by=list(backlog$project),  
@@ -677,7 +679,7 @@ plannedFinishDateLabel <- paste("Planned 1.0 Go live date",
                                 as.Date(plannedFinishDate), sep = " ")
 
 
-for (currentProject in c('VIN')) {
+for (currentProject in c('VBS', 'VEL')) {
   burndownPerProject <- burndown[burndown$project == currentProject,]
   finishDate <- max(burndownPerProject[!is.na(burndownPerProject$backlogLeft),]$day)
   finishDate <- as.POSIXct.Date(finishDate)
