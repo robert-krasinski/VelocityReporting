@@ -193,7 +193,7 @@ def GetWorkTimeInStatus(previousTransferDate, transferDate):
 
 
 def isMajorVersion(version):
-    if re.search('UK', version['name']) == None:
+    if re.search('1.1|1.2', version['name']) == None:
         return False
     else:
         return True
@@ -527,7 +527,12 @@ def GetVXTAndRelated():
     relatedIssuesList2ndLevel = [x for x in relatedIssuesList2ndLevel if x.linkedKey.find("VMCM") == -1]
     relatedIssuesList2ndLevel = [x for x in relatedIssuesList2ndLevel if x.linkedKey.find("GLOUC") == -1]
     relatedIssuesList2ndLevel = [x for x in relatedIssuesList2ndLevel if x.linkedKey.find("II") == -1]
-    searchUrl = CreateUrlForRelatedIssues(relatedIssuesList2ndLevel)
+    relatedIssuesList2ndLevel = [x for x in relatedIssuesList2ndLevel if x.linkedKey.find("AAG") == -1]
+    relatedIssuesList2ndLevel = [x for x in relatedIssuesList2ndLevel if x.linkedKey.find("ITH") == -1]
+    relatedIssuesList2ndLevel = [x for x in relatedIssuesList2ndLevel if x.linkedKey.find("UX") == -1]
+
+    relatedIssuesSet2ndLevel = set(relatedIssuesList2ndLevel)
+    searchUrl = CreateUrlForRelatedIssues(relatedIssuesSet2ndLevel)
     relatedIssuesList3rdLevel, issueList3rdLevel = GetVXTAndRelatedLists(searchUrl)
     issueList += issueList3rdLevel
 
@@ -563,12 +568,18 @@ def GetVXTAndRelated():
 
 def CreateUrlForRelatedIssues(relatedIssuesList):
     searchUrl = "/rest/api/2/search?jql=id+in+%28"
-    # get related issues
+
+    keySet = set()
     for relation in relatedIssuesList:
-        searchUrl += relation.linkedKey + ","
+        keySet.add(relation.linkedKey)
+
+    # get related issues
+    #for relation in relatedIssuesList:
+    #    searchUrl += relation.linkedKey + ","
+    searchUrl += ','.join(keySet)
 
     # remove last ,
-    searchUrl = searchUrl[:-1]
+    #searchUrl = searchUrl[:-1]
     searchUrl += "%29&startAt="
     return searchUrl
 
