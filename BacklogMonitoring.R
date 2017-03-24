@@ -9,7 +9,7 @@ Sys.setlocale("LC_ALL", "UTF-8") # Make sure not to omit the `"LC_ALL",` first a
 
 # in your program, make sure the Sys.setlocale worked, sprinkle this assertion in your code before attempting to read.csv:
 #stopifnot(Sys.getlocale('LC_CTYPE') == "pt_PT.ISO8859-1")
-
+library(xlsx)
 library(treemap)
 library(data.tree)
 
@@ -166,11 +166,11 @@ createBacklogNodes3 <- function()
   
   #according to this so question. apostrophes can break plot
   #http://stackoverflow.com/questions/40401045/large-data-tree-causes-plot-to-error
-  backlog$summaryCleaned.vxt <- gsub("['\"/]", " ", backlog$summary.vxt)
-  backlog$summaryCleaned.child1 <- gsub("['\"/]", " ", backlog$summary.child1)
+  backlog$summaryCleaned.vxt <- gsub("['\"/%-,_]", " ", backlog$summary.vxt)
+  backlog$summaryCleaned.child1 <- gsub("['\"/%-,_]", " ", backlog$summary.child1)
   #backlog$summaryCleaned.vxt <- gsub("/", " ", backlog$summaryCleaned.vxt)
   #backlog$summaryCleaned.child1 <- gsub("/", " ", backlog$summaryCleaned.child1)
-  backlog$summaryCleaned.child2 <- gsub("['\"]", " ", backlog$summary.child2)
+  backlog$summaryCleaned.child2 <- gsub("['\"/%-,_]", " ", backlog$summary.child2)
   #backlog$summaryCleaned.child2 <- gsub("/", " ", backlog$summaryCleaned.child2)
   #backlog$summaryCleaned.child1 <- gsub("'", " ", backlog$summary.child1)
   
@@ -179,24 +179,32 @@ createBacklogNodes3 <- function()
   backlog$pathString <- paste("VXT", 
                               backlog$fixVersion.vxt, 
                               paste(backlog$key, backlog$summaryCleaned.vxt, backlog$status.vxt, sep = ", "),
-                              backlog$minorVersion.child1,
+                              backlog$fixVersion.child1,
                               paste(backlog$key.child1, backlog$type.child1, backlog$summaryCleaned.child1, backlog$status.child1, sep = ", "),
-                              backlog$minorVersion.child2,
+                              backlog$fixVersion.child2,
                               paste(backlog$key.child2, backlog$type.child2, backlog$summaryCleaned.child2, backlog$status.child2, sep = ", "),
                               sep = "/")
+  #backlog$pathString <- gsub("['\"/%-,_]", " ", backlog$pathString)
   backlog$pathString <- gsub("NA", "", backlog$pathString)
   
+  #backlog <- head(backlog,1)
   write.xlsx(backlog, sheetName = "data", append = FALSE,
              "./data/backlogTree.xlsx") 
   
-  backlog <- backlog[backlog$fixVersion.vxt == '1.2 ',]
+  #options(error=stop)
+  #View(backlog)
+  #stop()
+  backlog <- backlog[backlog$fixVersion.vxt == '1.1 CURRENT ',]
+  
   #backlog <- backlog[backlog$fixVersion.vxt %in% c('1.1a ', '1.1b ', '1.1c ', '1.1d ', '1.1e ', '1.1f '),]
   #View(backlog)
   #stop()
     
   
   #stop()
+  
   backlogTree <- as.Node(backlog)
+  
 }
 
 
@@ -228,8 +236,10 @@ GetNodeColor <- function(node){
 } 
 
 plotVersionTree <- function(){
+  #9
   backlogTree <- createBacklogNodes3()
-  print(backlogTree, limit = 200)
+  
+  print(backlogTree, limit = 1000)
   
   SetGraphStyle(backlogTree, rankdir = "LR")
   
@@ -237,7 +247,7 @@ plotVersionTree <- function(){
   plot(backlogTree)
 }
 
-plotVersionTree()
+#plotVersionTree()
 
 #warnings()
 #stop()
@@ -251,7 +261,8 @@ backlogIssues <- backlogIssues[backlogIssues$type != 'Sub-task',]
 backlogIssues <- merge(backlogIssues, linkedVXT, by.x = 'key', by.y = 'key', 
                        all.x = TRUE, suffixes = c('.backlog', '.vxt'))
 
-backlogIssues$islinkedVXT <- ifelse(!is.na(backlogIssues$linkedKey), 'linked VXT', 'not linked VXT')
+backlogIssues$islinkedVXT <- ifelse(backlogIssues$type == 'Bug', 'Bug',
+                                    ifelse(!is.na(backlogIssues$linkedKey), 'linked VXT', 'not linked VXT'))
 backlogIssues$count <- 1
 
 backlogIssuesAggr <- aggregate( x=cbind(backlogIssues$count), 
@@ -273,11 +284,11 @@ for (currentProject in projects) {
   backlogIssuesAggrPerProject <- backlogIssuesAggr[backlogIssuesAggr$project == currentProject,]
   plot <- pie(backlogIssuesAggrPerProject$count, 
               labels = backlogIssuesAggrPerProject$isLinked, 
-              col = c("green", "red"),
+              col = c("red", "green", "orange"),
               main=paste("Issues in backlog for project:", currentProject, "in all versions."))
   print(plot)
 }
-
+#stop()
 # colnames(backlogIssuesAggr )[1] <- "project"
 # colnames(backlogIssuesAggr )[2] <- "linkedVXT"
 # colnames(backlogIssuesAggr )[3] <- "issuesCount"
@@ -369,6 +380,41 @@ futureSprintsIssues <- futureSprintsIssues[!is.na(futureSprintsIssues$key),]
  
  #View(backlogIssuesAgrPerSprint)
  #stop() 
+ 
+ #---------------------------------------------------------------------------------------------------------- 
+ futureSprintsAggr <- aggregate( x=cbind(futureSprintsIssues$count), 
+                                         by=list(futureSprintsIssues$project, futureSprintsIssues$name,
+                                                 futureSprintsIssues$islinkedVXT),  
+                                         FUN = sum)
+ 
+ colnames(futureSprintsAggr )[1] <- "project"
+ colnames(futureSprintsAggr )[2] <- "sprintName"
+ #colnames(backlogIssuesAggr )[3] <- "type"
+ colnames(futureSprintsAggr )[3] <- "linkStatus"
+ colnames(futureSprintsAggr )[4] <- "count"
+ 
+ for(currentProject in projects)
+ {
+   futureSprintsAggrCurrProject <- futureSprintsAggr[futureSprintsAggr$project == currentProject,]
+   #View(futureSprintsAggrCurrProject)
+   plot <- ggplot(data = futureSprintsAggrCurrProject, 
+                  aes(x = futureSprintsAggrCurrProject$sprintName,
+                      y = futureSprintsAggrCurrProject$count,
+                      fill = futureSprintsAggrCurrProject$linkStatus,
+                      label = futureSprintsAggrCurrProject$count)) +
+     geom_bar(stat="identity") +
+     ggtitle(paste("Future sprints status for project:", currentProject)) + 
+     #scale_fill_manual( values = c("yellow", "orange") ) +
+     ylab("Number of issues") +
+     xlab("Sprint name") +
+     labs(fill  = "Status") +
+     geom_text(size = 3, position = position_stack(vjust = 0.5)) +
+     theme(axis.text.x = element_text(angle = 90, hjust = 1))
+   
+   print(plot)
+ }
+ 
+ #View(futureSprintsAggr)
 #----------------------------------------------------------------------------------------------------------
 write.xlsx(backlogIssues, sheetName = "issues", append = FALSE,
            "./data/backlog.xlsx") 
